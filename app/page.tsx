@@ -35,7 +35,6 @@ export default function Home() {
         <WhyDaygo />
         <PrivacyPanel />
         <Pricing />
-        <FinalCTA />
       </main>
       <Footer />
     </>
@@ -797,57 +796,6 @@ function Pricing() {
             wellbeing tool, not medical advice.
           </p>
         </div>
-      </div>
-    </section>
-  );
-}
-
-/* =================================================================
- * FINAL CTA
- * =================================================================*/
-function FinalCTA() {
-  return (
-    <section className="relative overflow-hidden border-t border-white/[0.06]">
-      {/* Dawn-trail backdrop. Gradient overlay keeps the type
-          legible while the warm forest light bleeds through behind.
-          z-0 (not -z-10) — negative z stacks the image behind the
-          page's body background and renders solid black. */}
-      <div className="absolute inset-0 z-0">
-        <Image
-          src="/hero-runner.png"
-          alt=""
-          fill
-          sizes="100vw"
-          className="object-cover opacity-80"
-          aria-hidden
-        />
-        <div
-          className="absolute inset-0"
-          style={{
-            background:
-              "linear-gradient(180deg, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.30) 35%, rgba(0,0,0,0.30) 65%, rgba(0,0,0,0.85) 100%)",
-          }}
-        />
-      </div>
-
-      <div className="relative mx-auto max-w-5xl px-5 py-28 text-center sm:px-8 md:py-40">
-        <h2 className="font-medium leading-[0.92] tracking-display">
-          <span className="block text-[clamp(2.5rem,9vw,8rem)]">
-            Tomorrow morning,
-          </span>
-          <span className="block text-[clamp(2.5rem,9vw,8rem)] text-accent">
-            you'll know.
-          </span>
-        </h2>
-        <a
-          href="#download"
-          className="mt-12 inline-flex items-center gap-2 rounded-full bg-accent px-8 py-4 text-base font-semibold text-accent-on transition hover:opacity-90"
-        >
-          Get the app — it's free →
-        </a>
-        <p className="mt-4 text-xs text-white/55">
-          No card needed. iOS only, for now.
-        </p>
       </div>
     </section>
   );

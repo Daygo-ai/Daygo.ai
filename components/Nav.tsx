@@ -21,7 +21,7 @@ export function Nav() {
           href="#download"
           className="rounded-full bg-[var(--color-accent)] px-4 py-1.5 text-sm font-semibold text-[var(--color-on-accent)] transition hover:opacity-90"
         >
-          Get the app
+          Get early access
         </a>
       </div>
     </header>

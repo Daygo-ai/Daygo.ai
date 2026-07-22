@@ -145,7 +145,7 @@ function Hero() {
                 >
                   See it work
                 </a>
-                <span className="text-xs" style={{ color: `${INK}66` }}>Free · iOS only</span>
+                <span className="text-xs" style={{ color: `${INK}66` }}>Coming soon · iOS · Free</span>
               </div>
             </div>
 
@@ -752,12 +752,16 @@ function Pricing() {
       className="relative border-t border-white/[0.06] bg-black/30"
     >
       <div className="relative mx-auto max-w-3xl px-5 py-24 text-center sm:px-8 md:py-32">
-        <SectionLabel center>Free, for now</SectionLabel>
+        <SectionLabel center>Coming soon</SectionLabel>
         <h2 className="mt-8 text-4xl font-medium leading-tight tracking-display md:text-6xl">
           Free while it's early.
           <br />
           No card, no catch.
         </h2>
+        <p className="mt-4 text-sm text-white/55">
+          Daygo is heading to the App Store soon. Join the waitlist and
+          you'll be first to know the moment it's live.
+        </p>
         <div className="card-glass-strong mt-12 rounded-3xl p-8">
           <div className="text-[11px] font-semibold uppercase tracking-[0.25em] text-accent">
             Daygo
@@ -789,11 +793,11 @@ function Pricing() {
             href="#download"
             className="mt-10 inline-flex items-center gap-2 rounded-full bg-accent px-6 py-3 text-sm font-semibold text-accent-on transition hover:opacity-90"
           >
-            Get the app →
+            Join the waitlist →
           </a>
           <p className="mt-4 text-xs text-white/45">
-            Daygo is new and improving every week. Daygo is a
-            wellbeing tool, not medical advice.
+            Not live yet — join the waitlist to get notified at launch.
+            Daygo is a wellbeing tool, not medical advice.
           </p>
         </div>
       </div>

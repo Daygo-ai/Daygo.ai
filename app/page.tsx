@@ -4,6 +4,7 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import { Nav } from "@/components/Nav";
 import { Footer } from "@/components/Footer";
+import { WaitlistForm } from "@/components/WaitlistForm";
 import { AnimatedChat } from "@/components/AnimatedChat";
 import {
   ChatMock,
@@ -135,23 +136,18 @@ function Hero() {
               <span style={{ color: INK }}>One AI coach. Plain English. Remembers what worked.</span>
             </p>
 
-            <div className="mt-8 flex flex-wrap items-center gap-3" id="download">
-              <a
-                href="#download"
-                className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-semibold transition hover:opacity-90"
-                style={{ background: INK, color: LIME }}
-              >
-                Get the app
-                <span aria-hidden>→</span>
-              </a>
-              <a
-                href="#features"
-                className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-semibold transition"
-                style={{ border: `1.5px solid ${INK}44`, color: `${INK}cc` }}
-              >
-                See it work
-              </a>
-              <span className="text-xs" style={{ color: `${INK}66` }}>Free · iOS only</span>
+            <div className="mt-8" id="download">
+              <WaitlistForm ink={INK} lime={LIME} />
+              <div className="mt-4 flex flex-wrap items-center gap-3">
+                <a
+                  href="#features"
+                  className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-semibold transition"
+                  style={{ border: `1.5px solid ${INK}44`, color: `${INK}cc` }}
+                >
+                  See it work
+                </a>
+                <span className="text-xs" style={{ color: `${INK}66` }}>Free · iOS only</span>
+              </div>
             </div>
 
             {/* Trust strip */}

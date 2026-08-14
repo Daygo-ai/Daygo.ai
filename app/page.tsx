@@ -816,13 +816,11 @@ function Pricing() {
         {/* Email capture kept, but demoted well below the download CTA —
             it's for people who want release notes, not a gate in front
             of an app that's already downloadable. */}
-        <div className="mt-16 border-t border-white/[0.06] pt-10">
-          <p className="text-sm text-white/55">
-            Want to hear what's new? I ship updates most weeks.
+        <div className="mt-14 flex flex-col items-center gap-3 border-t border-white/[0.06] pt-8">
+          <p className="text-xs text-white/40">
+            Not ready to download? I&apos;ll email you when something big ships.
           </p>
-          <div className="mt-4 flex justify-center">
-            <WaitlistForm ink={INK} lime={LIME} />
-          </div>
+          <WaitlistForm />
         </div>
       </div>
     </section>

@@ -18,10 +18,12 @@ export function Nav() {
           </Link>
         </nav>
         <a
-          href="#download"
+          href="https://apps.apple.com/us/app/daygo-ai/id6773255641"
+          target="_blank"
+          rel="noopener noreferrer"
           className="rounded-full bg-[var(--color-accent)] px-4 py-1.5 text-sm font-semibold text-[var(--color-on-accent)] transition hover:opacity-90"
         >
-          Get early access
+          Download
         </a>
       </div>
     </header>

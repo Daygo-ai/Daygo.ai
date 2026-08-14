@@ -20,6 +20,9 @@ import { PhoneMock } from "@/components/PhoneMock";
 const LIME = "#CDEE3C";
 const INK = "#161913";
 
+// Live on the App Store. Every "download" CTA points here.
+const APP_STORE_URL = "https://apps.apple.com/us/app/daygo-ai/id6773255641";
+
 export default function Home() {
   return (
     <>
@@ -135,18 +138,25 @@ function Hero() {
               <span style={{ color: INK }}>One AI coach. Plain English. Remembers what worked.</span>
             </p>
 
-            <div className="mt-8" id="download">
-              <WaitlistForm ink={INK} lime={LIME} />
-              <div className="mt-4 flex flex-wrap items-center gap-3">
-                <a
-                  href="#features"
-                  className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-semibold transition"
-                  style={{ border: `1.5px solid ${INK}44`, color: `${INK}cc` }}
-                >
-                  See it work
-                </a>
-                <span className="text-xs" style={{ color: `${INK}66` }}>Coming soon · iOS · Free</span>
-              </div>
+            <div className="mt-8 flex flex-wrap items-center gap-3" id="download">
+              <a
+                href={APP_STORE_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-semibold transition hover:opacity-90"
+                style={{ background: INK, color: LIME }}
+              >
+                Download on the App Store
+                <span aria-hidden>→</span>
+              </a>
+              <a
+                href="#features"
+                className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-semibold transition"
+                style={{ border: `1.5px solid ${INK}44`, color: `${INK}cc` }}
+              >
+                See it work
+              </a>
+              <span className="text-xs" style={{ color: `${INK}66` }}>Free · iOS</span>
             </div>
 
             {/* Trust strip */}
@@ -752,15 +762,15 @@ function Pricing() {
       className="relative border-t border-white/[0.06] bg-black/30"
     >
       <div className="relative mx-auto max-w-3xl px-5 py-24 text-center sm:px-8 md:py-32">
-        <SectionLabel center>Coming soon</SectionLabel>
+        <SectionLabel center>Out now</SectionLabel>
         <h2 className="mt-8 text-4xl font-medium leading-tight tracking-display md:text-6xl">
           Free while it's early.
           <br />
           No card, no catch.
         </h2>
         <p className="mt-4 text-sm text-white/55">
-          Daygo is heading to the App Store soon. Join the waitlist and
-          you'll be first to know the moment it's live.
+          Daygo is live on the App Store. Download it and start today —
+          nothing to sign up for first.
         </p>
         <div className="card-glass-strong mt-12 rounded-3xl p-8">
           <div className="text-[11px] font-semibold uppercase tracking-[0.25em] text-accent">
@@ -790,15 +800,29 @@ function Pricing() {
             ))}
           </ul>
           <a
-            href="#download"
+            href={APP_STORE_URL}
+            target="_blank"
+            rel="noopener noreferrer"
             className="mt-10 inline-flex items-center gap-2 rounded-full bg-accent px-6 py-3 text-sm font-semibold text-accent-on transition hover:opacity-90"
           >
-            Join the waitlist →
+            Download on the App Store →
           </a>
           <p className="mt-4 text-xs text-white/45">
-            Not live yet — join the waitlist to get notified at launch.
-            Daygo is a wellbeing tool, not medical advice.
+            Daygo is new and improving every week. It's a wellbeing tool,
+            not medical advice.
           </p>
+        </div>
+
+        {/* Email capture kept, but demoted well below the download CTA —
+            it's for people who want release notes, not a gate in front
+            of an app that's already downloadable. */}
+        <div className="mt-16 border-t border-white/[0.06] pt-10">
+          <p className="text-sm text-white/55">
+            Want to hear what's new? I ship updates most weeks.
+          </p>
+          <div className="mt-4 flex justify-center">
+            <WaitlistForm ink={INK} lime={LIME} />
+          </div>
         </div>
       </div>
     </section>

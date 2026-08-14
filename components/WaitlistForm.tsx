@@ -47,7 +47,7 @@ export function WaitlistForm({
         className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full px-6 py-3 text-sm font-semibold transition hover:opacity-90"
         style={{ background: ink, color: lime }}
       >
-        Join the waitlist
+        Keep me posted
         <span aria-hidden>→</span>
       </button>
     </form>

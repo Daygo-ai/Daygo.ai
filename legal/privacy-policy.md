@@ -3,8 +3,6 @@
 _Last updated: 2026-07-21_
 _Operator: Marijus Dovydaitis ("we", "our")_
 
-This is a draft. Have an attorney qualified in your jurisdiction (and the jurisdictions of your largest user bases — at minimum US/EU/UK) review before publication. The structure below is App-Store-friendly and matches the data we actually collect today.
-
 ## 1. What this policy covers
 
 Daygo is a personal wellbeing app. This policy explains what personal data Daygo collects, why, where it's stored, who can see it, and what your rights are.

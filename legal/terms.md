@@ -2,8 +2,6 @@
 
 _Last updated: 2026-05-05_
 
-This is a draft. Have an attorney review before publication.
-
 ## 1. Acceptance
 
 By using Daygo you agree to these terms. If you don't, don't use Daygo.
@@ -63,7 +61,7 @@ You can stop using Daygo at any time and delete your account in Settings. We can
 
 ## 11. Governing law
 
-These terms are governed by the laws of [Lithuania / your operating jurisdiction]. Disputes go to the courts of that jurisdiction unless you have mandatory rights to a local forum.
+These terms are governed by the laws of Lithuania. Disputes go to the courts of Lithuania unless you have mandatory rights to a local forum.
 
 ## 12. Changes
 

@@ -27,7 +27,7 @@ async function loadUsageLog() {
   const since = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString();
   const { data, error } = await admin
     .from("ai_usage_log")
-    .select("user_id, created_at, model, input_tokens, output_tokens")
+    .select("user_id, created_at, source, model, input_tokens, output_tokens")
     .gte("created_at", since)
     .order("created_at", { ascending: false })
     .limit(50000);
@@ -88,6 +88,18 @@ export default async function AdminPage() {
 
   const totalCost = spendRows.reduce((sum, r) => sum + r.cost, 0);
 
+  const perSource = new Map<string, { calls: number; inputTokens: number; outputTokens: number }>();
+  for (const row of usage) {
+    const entry = perSource.get(row.source) ?? { calls: 0, inputTokens: 0, outputTokens: 0 };
+    entry.calls += 1;
+    entry.inputTokens += row.input_tokens;
+    entry.outputTokens += row.output_tokens;
+    perSource.set(row.source, entry);
+  }
+  const sourceRows = [...perSource.entries()]
+    .map(([source, stats]) => ({ source, ...stats, cost: estimateCost(stats.inputTokens, stats.outputTokens) }))
+    .sort((a, b) => b.cost - a.cost);
+
   const registered = [...users].sort(
     (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
   );
@@ -110,6 +122,18 @@ export default async function AdminPage() {
         <Stat label="Registered users" value={users.length} />
         <Stat label="Est. AI spend (90d)" value={`$${totalCost.toFixed(2)}`} />
       </section>
+
+      <h2 style={{ fontSize: 16, fontWeight: 600, marginTop: 32 }}>AI spend by feature (last 90 days)</h2>
+      <Table
+        columns={["Source", "Calls", "Input tokens", "Output tokens", "Est. cost"]}
+        rows={sourceRows.map((r) => [
+          r.source,
+          r.calls.toLocaleString(),
+          r.inputTokens.toLocaleString(),
+          r.outputTokens.toLocaleString(),
+          `$${r.cost.toFixed(3)}`,
+        ])}
+      />
 
       <h2 style={{ fontSize: 16, fontWeight: 600, marginTop: 32 }}>AI spend by user (last 90 days)</h2>
       <Table

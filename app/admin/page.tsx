@@ -8,11 +8,22 @@ async function listAllUsers() {
   const admin = supabaseAdmin();
   const perPage = 200;
   let page = 1;
-  const users: { id: string; email: string | null; created_at: string }[] = [];
+  const users: { id: string; email: string | null; name: string | null; created_at: string }[] = [];
   for (;;) {
     const { data, error } = await admin.auth.admin.listUsers({ page, perPage });
     if (error) throw error;
-    users.push(...data.users.map((u) => ({ id: u.id, email: u.email ?? null, created_at: u.created_at })));
+    users.push(
+      ...data.users.map((u) => ({
+        id: u.id,
+        email: u.email ?? null,
+        // Google sign-in forwards a real name; Apple only ever sends one
+        // on a user's very first authorization, and only if the app
+        // captured and forwarded it then — most existing users signed in
+        // via Apple before that was wired up, so this is null for them.
+        name: (u.user_metadata?.full_name || u.user_metadata?.name) ?? null,
+        created_at: u.created_at,
+      })),
+    );
     if (data.users.length < perPage) break;
     page += 1;
   }
@@ -149,8 +160,12 @@ export default async function AdminPage() {
 
       <h2 style={{ fontSize: 16, fontWeight: 600, marginTop: 32 }}>Registered users</h2>
       <Table
-        columns={["Email", "Registered"]}
-        rows={registered.slice(0, 200).map((u) => [u.email ?? "(no email)", new Date(u.created_at).toLocaleString()])}
+        columns={["Name", "Email", "Registered"]}
+        rows={registered.slice(0, 200).map((u) => [
+          u.name ?? "—",
+          u.email ?? "(no email)",
+          new Date(u.created_at).toLocaleString(),
+        ])}
       />
     </div>
   );

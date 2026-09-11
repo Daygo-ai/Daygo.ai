@@ -1,8 +1,19 @@
 import { isAuthed, logout } from "./actions";
 import { LoginForm } from "./LoginForm";
+import { ProGrants } from "./ProGrants";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
 export const dynamic = "force-dynamic";
+
+async function loadManualGrants() {
+  const admin = supabaseAdmin();
+  const { data, error } = await admin
+    .from("manual_pro_grants")
+    .select("user_id, granted_at")
+    .order("granted_at", { ascending: false });
+  if (error) throw error;
+  return data;
+}
 
 async function listAllUsers() {
   const admin = supabaseAdmin();
@@ -62,7 +73,7 @@ export default async function AdminPage() {
     return <LoginForm />;
   }
 
-  const [users, usage] = await Promise.all([listAllUsers(), loadUsageLog()]);
+  const [users, usage, manualGrants] = await Promise.all([listAllUsers(), loadUsageLog(), loadManualGrants()]);
 
   const now = Date.now();
   const DAY = 24 * 60 * 60 * 1000;
@@ -115,6 +126,12 @@ export default async function AdminPage() {
     (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
   );
 
+  const grantRows = manualGrants.map((g) => ({
+    userId: g.user_id,
+    email: emailById.get(g.user_id) ?? "(unknown)",
+    grantedAt: g.granted_at,
+  }));
+
   return (
     <div style={{ maxWidth: 900, margin: "0 auto", padding: "32px 20px", fontFamily: "system-ui, sans-serif" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
@@ -133,6 +150,13 @@ export default async function AdminPage() {
         <Stat label="Registered users" value={users.length} />
         <Stat label="Est. AI spend (90d)" value={`$${totalCost.toFixed(2)}`} />
       </section>
+
+      <h2 style={{ fontSize: 16, fontWeight: 600, marginTop: 32 }}>Pro access grants</h2>
+      <p style={{ fontSize: 13, color: "#666", marginBottom: 12 }}>
+        Give someone free Pro (friends, family, support gestures) without a real purchase. Checked by the app
+        alongside real subscriptions.
+      </p>
+      <ProGrants grants={grantRows} />
 
       <h2 style={{ fontSize: 16, fontWeight: 600, marginTop: 32 }}>AI spend by feature (last 90 days)</h2>
       <Table

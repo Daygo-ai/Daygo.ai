@@ -157,12 +157,13 @@ export default async function AdminPage() {
         // their text/background independently of our own inline styles,
         // which is exactly what made "10" and "Never" nearly invisible.
         colorScheme: "light",
-        maxWidth: 900,
-        margin: "0 auto",
-        padding: "32px 20px",
+        width: "100%",
+        padding: "32px 40px",
         fontFamily: "system-ui, sans-serif",
         background: "#fff",
         color: "#111",
+        minHeight: "100vh",
+        boxSizing: "border-box",
       }}
     >
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>

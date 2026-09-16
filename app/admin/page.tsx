@@ -17,6 +17,24 @@ async function loadFreeMessageConfig() {
   };
 }
 
+async function loadSubscriptions() {
+  const admin = supabaseAdmin();
+  const { data, error } = await admin
+    .from("subscriptions")
+    .select("user_id, product_id, status, expires_at, updated_at")
+    .order("updated_at", { ascending: false });
+  if (error) throw error;
+  // Keep only the most recently updated row per user — someone can have
+  // multiple subscription rows (e.g. tried Weekly, then switched to
+  // Annual), and only the latest one reflects their real current status.
+  const latestByUser = new Map<string, { product_id: string; status: string; expires_at: string | null }>();
+  for (const row of data) {
+    if (!row.user_id || latestByUser.has(row.user_id)) continue;
+    latestByUser.set(row.user_id, { product_id: row.product_id, status: row.status, expires_at: row.expires_at });
+  }
+  return latestByUser;
+}
+
 async function loadManualGrants() {
   const admin = supabaseAdmin();
   const { data, error } = await admin
@@ -80,16 +98,36 @@ function estimateCost(inputTokens: number, outputTokens: number) {
   return inputTokens * PRICE_PER_INPUT_TOKEN + outputTokens * PRICE_PER_OUTPUT_TOKEN;
 }
 
+const PLAN_LABELS: Record<string, string> = {
+  "ai.daygo.pro.weekly": "Weekly",
+  "ai.daygo.pro.annual": "Annual",
+};
+
+function formatSubscriptionStatus(sub: { product_id: string; status: string } | undefined): string {
+  if (!sub) return "—";
+  const plan = PLAN_LABELS[sub.product_id] ?? sub.product_id;
+  const statusLabel: Record<string, string> = {
+    active: "Active",
+    active_will_not_renew: "Active (not renewing)",
+    expired: "Expired",
+    in_grace_period: "Grace period",
+    in_billing_retry: "Billing retry",
+    revoked: "Refunded/revoked",
+  };
+  return `${plan} — ${statusLabel[sub.status] ?? sub.status}`;
+}
+
 export default async function AdminPage() {
   if (!(await isAuthed())) {
     return <LoginForm />;
   }
 
-  const [users, usage, manualGrants, freeMessageConfig] = await Promise.all([
+  const [users, usage, manualGrants, freeMessageConfig, subscriptionByUser] = await Promise.all([
     listAllUsers(),
     loadUsageLog(),
     loadManualGrants(),
     loadFreeMessageConfig(),
+    loadSubscriptions(),
   ]);
 
   const now = Date.now();
@@ -143,6 +181,13 @@ export default async function AdminPage() {
     (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
   );
 
+  // "Ever subscribed" — anyone with a row at all, regardless of current
+  // status (active, expired, refunded...) — is the real conversion
+  // signal: they crossed from free to paying at least once. This is
+  // exactly the number the free-message experiment is meant to move.
+  const everSubscribedCount = users.filter((u) => subscriptionByUser.has(u.id)).length;
+  const conversionRate = users.length > 0 ? (everSubscribedCount / users.length) * 100 : 0;
+
   const grantRows = manualGrants.map((g) => ({
     userId: g.user_id,
     email: emailById.get(g.user_id) ?? "(unknown)",
@@ -180,6 +225,8 @@ export default async function AdminPage() {
         <Stat label="WAU" value={wau} />
         <Stat label="MAU" value={mau} />
         <Stat label="Registered users" value={users.length} />
+        <Stat label="Ever subscribed" value={everSubscribedCount} />
+        <Stat label="Conversion rate" value={`${conversionRate.toFixed(1)}%`} />
         <Stat label="Est. AI spend (90d)" value={`$${totalCost.toFixed(2)}`} />
       </section>
 
@@ -229,10 +276,11 @@ export default async function AdminPage() {
 
       <Section title="Registered users">
         <Table
-          columns={["Name", "Email", "Registered"]}
+          columns={["Name", "Email", "Subscription", "Registered"]}
           rows={registered.slice(0, 200).map((u) => [
             u.name ?? "—",
             u.email ?? "(no email)",
+            formatSubscriptionStatus(subscriptionByUser.get(u.id)),
             new Date(u.created_at).toLocaleString(),
           ])}
         />

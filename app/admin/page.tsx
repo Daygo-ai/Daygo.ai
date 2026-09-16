@@ -1,9 +1,21 @@
 import { isAuthed, logout } from "./actions";
 import { LoginForm } from "./LoginForm";
 import { ProGrants } from "./ProGrants";
+import { FreeMessageConfig } from "./FreeMessageConfig";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
 export const dynamic = "force-dynamic";
+
+async function loadFreeMessageConfig() {
+  const admin = supabaseAdmin();
+  const { data, error } = await admin.from("app_config").select("key, value");
+  if (error) throw error;
+  const byKey = new Map(data.map((r) => [r.key, r.value]));
+  return {
+    limit: parseInt(byKey.get("free_message_limit") ?? "10", 10),
+    mode: byKey.get("free_message_mode") ?? "lifetime",
+  };
+}
 
 async function loadManualGrants() {
   const admin = supabaseAdmin();
@@ -73,7 +85,12 @@ export default async function AdminPage() {
     return <LoginForm />;
   }
 
-  const [users, usage, manualGrants] = await Promise.all([listAllUsers(), loadUsageLog(), loadManualGrants()]);
+  const [users, usage, manualGrants, freeMessageConfig] = await Promise.all([
+    listAllUsers(),
+    loadUsageLog(),
+    loadManualGrants(),
+    loadFreeMessageConfig(),
+  ]);
 
   const now = Date.now();
   const DAY = 24 * 60 * 60 * 1000;
@@ -150,6 +167,14 @@ export default async function AdminPage() {
         <Stat label="Registered users" value={users.length} />
         <Stat label="Est. AI spend (90d)" value={`$${totalCost.toFixed(2)}`} />
       </section>
+
+      <h2 style={{ fontSize: 16, fontWeight: 600, marginTop: 32 }}>Free chat messages (non-subscribers)</h2>
+      <p style={{ fontSize: 13, color: "#666", marginBottom: 12 }}>
+        How many messages someone can send before the hard paywall appears. "Never" resets means a one-time taste
+        of the product; "Every day" turns this into a real ongoing free tier — a bigger decision than the number
+        itself.
+      </p>
+      <FreeMessageConfig limit={freeMessageConfig.limit} mode={freeMessageConfig.mode} />
 
       <h2 style={{ fontSize: 16, fontWeight: 600, marginTop: 32 }}>Pro access grants</h2>
       <p style={{ fontSize: 13, color: "#666", marginBottom: 12 }}>

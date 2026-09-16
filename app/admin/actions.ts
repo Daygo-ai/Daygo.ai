@@ -71,3 +71,21 @@ export async function revokePro(userId: string) {
   await supabaseAdmin().from("manual_pro_grants").delete().eq("user_id", userId);
   revalidatePath("/admin");
 }
+
+export async function updateFreeMessageConfig(_prevState: { error?: string }, formData: FormData) {
+  if (!(await isAuthed())) return { error: "Not authorized." };
+  const limitRaw = formData.get("limit");
+  const mode = formData.get("mode");
+  const limit = typeof limitRaw === "string" ? parseInt(limitRaw, 10) : NaN;
+  if (!Number.isFinite(limit) || limit < 0) return { error: "Enter a valid non-negative number." };
+  if (mode !== "lifetime" && mode !== "daily") return { error: "Invalid mode." };
+
+  const admin = supabaseAdmin();
+  const { error } = await admin.from("app_config").upsert([
+    { key: "free_message_limit", value: String(limit) },
+    { key: "free_message_mode", value: mode },
+  ]);
+  if (error) return { error: error.message };
+  revalidatePath("/admin");
+  return { error: undefined };
+}

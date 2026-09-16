@@ -15,7 +15,7 @@ export function FreeMessageConfig({ limit, mode }: { limit: number; mode: string
           name="limit"
           min={0}
           defaultValue={limit}
-          style={{ padding: "8px 10px", border: "1px solid #ccc", borderRadius: 8, width: 100 }}
+          style={{ padding: "8px 10px", border: "1px solid #ccc", borderRadius: 8, width: 100, color: "#111", background: "#fff" }}
         />
       </div>
       <div>
@@ -23,7 +23,7 @@ export function FreeMessageConfig({ limit, mode }: { limit: number; mode: string
         <select
           name="mode"
           defaultValue={mode}
-          style={{ padding: "8px 10px", border: "1px solid #ccc", borderRadius: 8 }}
+          style={{ padding: "8px 10px", border: "1px solid #ccc", borderRadius: 8, color: "#111", background: "#fff" }}
         >
           <option value="lifetime">Never (one-time taste)</option>
           <option value="daily">Every day (real free tier)</option>

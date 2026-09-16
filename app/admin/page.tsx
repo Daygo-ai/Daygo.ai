@@ -150,7 +150,21 @@ export default async function AdminPage() {
   }));
 
   return (
-    <div style={{ maxWidth: 900, margin: "0 auto", padding: "32px 20px", fontFamily: "system-ui, sans-serif" }}>
+    <div
+      style={{
+        // Forces native form controls (input/select) to always render
+        // light — without this, a browser in dark mode auto-restyles
+        // their text/background independently of our own inline styles,
+        // which is exactly what made "10" and "Never" nearly invisible.
+        colorScheme: "light",
+        maxWidth: 900,
+        margin: "0 auto",
+        padding: "32px 20px",
+        fontFamily: "system-ui, sans-serif",
+        background: "#fff",
+        color: "#111",
+      }}
+    >
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
         <h1 style={{ fontSize: 22, fontWeight: 600 }}>Daygo admin</h1>
         <form action={logout}>
@@ -168,55 +182,91 @@ export default async function AdminPage() {
         <Stat label="Est. AI spend (90d)" value={`$${totalCost.toFixed(2)}`} />
       </section>
 
-      <h2 style={{ fontSize: 16, fontWeight: 600, marginTop: 32 }}>Free chat messages (non-subscribers)</h2>
-      <p style={{ fontSize: 13, color: "#666", marginBottom: 12 }}>
-        How many messages someone can send before the hard paywall appears. "Never" resets means a one-time taste
-        of the product; "Every day" turns this into a real ongoing free tier — a bigger decision than the number
-        itself.
-      </p>
-      <FreeMessageConfig limit={freeMessageConfig.limit} mode={freeMessageConfig.mode} />
+      <Section
+        title="Free chat messages (non-subscribers)"
+        description={
+          'How many messages someone can send before the hard paywall appears. "Never" resets means a one-time ' +
+          'taste of the product; "Every day" turns this into a real ongoing free tier — a bigger decision than ' +
+          "the number itself."
+        }
+      >
+        <FreeMessageConfig limit={freeMessageConfig.limit} mode={freeMessageConfig.mode} />
+      </Section>
 
-      <h2 style={{ fontSize: 16, fontWeight: 600, marginTop: 32 }}>Pro access grants</h2>
-      <p style={{ fontSize: 13, color: "#666", marginBottom: 12 }}>
-        Give someone free Pro (friends, family, support gestures) without a real purchase. Checked by the app
-        alongside real subscriptions.
-      </p>
-      <ProGrants grants={grantRows} />
+      <Section
+        title="Pro access grants"
+        description="Give someone free Pro (friends, family, support gestures) without a real purchase. Checked by the app alongside real subscriptions."
+      >
+        <ProGrants grants={grantRows} />
+      </Section>
 
-      <h2 style={{ fontSize: 16, fontWeight: 600, marginTop: 32 }}>AI spend by feature (last 90 days)</h2>
-      <Table
-        columns={["Source", "Calls", "Input tokens", "Output tokens", "Est. cost"]}
-        rows={sourceRows.map((r) => [
-          r.source,
-          r.calls.toLocaleString(),
-          r.inputTokens.toLocaleString(),
-          r.outputTokens.toLocaleString(),
-          `$${r.cost.toFixed(3)}`,
-        ])}
-      />
+      <Section title="AI spend by feature (last 90 days)">
+        <Table
+          columns={["Source", "Calls", "Input tokens", "Output tokens", "Est. cost"]}
+          rows={sourceRows.map((r) => [
+            r.source,
+            r.calls.toLocaleString(),
+            r.inputTokens.toLocaleString(),
+            r.outputTokens.toLocaleString(),
+            `$${r.cost.toFixed(3)}`,
+          ])}
+        />
+      </Section>
 
-      <h2 style={{ fontSize: 16, fontWeight: 600, marginTop: 32 }}>AI spend by user (last 90 days)</h2>
-      <Table
-        columns={["Email", "Calls", "Input tokens", "Output tokens", "Est. cost"]}
-        rows={spendRows.slice(0, 100).map((r) => [
-          r.email,
-          r.calls.toLocaleString(),
-          r.inputTokens.toLocaleString(),
-          r.outputTokens.toLocaleString(),
-          `$${r.cost.toFixed(3)}`,
-        ])}
-      />
+      <Section title="AI spend by user (last 90 days)">
+        <Table
+          columns={["Email", "Calls", "Input tokens", "Output tokens", "Est. cost"]}
+          rows={spendRows.slice(0, 100).map((r) => [
+            r.email,
+            r.calls.toLocaleString(),
+            r.inputTokens.toLocaleString(),
+            r.outputTokens.toLocaleString(),
+            `$${r.cost.toFixed(3)}`,
+          ])}
+        />
+      </Section>
 
-      <h2 style={{ fontSize: 16, fontWeight: 600, marginTop: 32 }}>Registered users</h2>
-      <Table
-        columns={["Name", "Email", "Registered"]}
-        rows={registered.slice(0, 200).map((u) => [
-          u.name ?? "—",
-          u.email ?? "(no email)",
-          new Date(u.created_at).toLocaleString(),
-        ])}
-      />
+      <Section title="Registered users">
+        <Table
+          columns={["Name", "Email", "Registered"]}
+          rows={registered.slice(0, 200).map((u) => [
+            u.name ?? "—",
+            u.email ?? "(no email)",
+            new Date(u.created_at).toLocaleString(),
+          ])}
+        />
+      </Section>
     </div>
+  );
+}
+
+function Section({
+  title,
+  description,
+  children,
+}: {
+  title: string;
+  description?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section
+      style={{
+        marginTop: 28,
+        padding: 20,
+        border: "1px solid #e5e5e5",
+        borderRadius: 12,
+        background: "#fafafa",
+      }}
+    >
+      <h2 style={{ fontSize: 16, fontWeight: 600, margin: 0 }}>{title}</h2>
+      {description ? (
+        <p style={{ fontSize: 13, color: "#666", marginTop: 6, marginBottom: 14 }}>{description}</p>
+      ) : (
+        <div style={{ marginTop: 14 }} />
+      )}
+      {children}
+    </section>
   );
 }
 

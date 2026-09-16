@@ -14,7 +14,7 @@ export function ProGrants({ grants }: { grants: { userId: string; email: string;
           name="email"
           placeholder="email@example.com"
           required
-          style={{ padding: "8px 10px", border: "1px solid #ccc", borderRadius: 8, minWidth: 260 }}
+          style={{ padding: "8px 10px", border: "1px solid #ccc", borderRadius: 8, minWidth: 260, color: "#111", background: "#fff" }}
         />
         <button
           type="submit"

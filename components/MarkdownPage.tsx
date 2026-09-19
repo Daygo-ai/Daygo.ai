@@ -2,35 +2,39 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Nav } from "@/components/Nav";
 import { Footer } from "@/components/Footer";
+import { BONE, LIME } from "@/lib/brand";
 
 /**
- * Renders one of the legal markdown files inside the standard nav +
- * footer chrome. The styles map markdown elements to the same dark
- * design language as the rest of the site so there's no jarring
- * transition between the landing page and the legal docs.
+ * Renders one of the legal markdown files inside the shared nav + footer
+ * chrome, in the editorial light theme: bone page, black type, mono
+ * headings that echo the section labels used across the marketing pages.
  */
 export function MarkdownPage({ markdown }: { markdown: string }) {
   return (
     <>
       <Nav />
-      <main className="mx-auto max-w-3xl px-5 py-16 sm:px-8 md:py-24">
-        <article className="prose-daygo">
+      <main style={{ background: BONE }} className="px-6 py-16 text-black md:px-10 md:py-24">
+        <article className="prose-daygo mx-auto max-w-3xl">
           <ReactMarkdown remarkPlugins={[remarkGfm]}>{markdown}</ReactMarkdown>
         </article>
       </main>
       <style>{`
-        .prose-daygo h1 { font-size: 2.5rem; font-weight: 500; letter-spacing: -0.03em; line-height: 1.05; margin-bottom: 0.5rem; color: var(--color-text); }
-        .prose-daygo h2 { font-size: 1.5rem; font-weight: 600; margin-top: 2.5rem; margin-bottom: 0.75rem; color: var(--color-text); }
-        .prose-daygo h3 { font-size: 1.125rem; font-weight: 600; margin-top: 1.75rem; margin-bottom: 0.5rem; color: var(--color-text); }
-        .prose-daygo p { margin: 0.75rem 0; line-height: 1.65; color: var(--color-text-soft); }
-        .prose-daygo ul { margin: 0.75rem 0; padding-left: 1.25rem; list-style: disc; color: var(--color-text-soft); }
-        .prose-daygo li { margin: 0.35rem 0; line-height: 1.55; }
-        .prose-daygo a { color: var(--color-accent); text-decoration: underline; text-underline-offset: 3px; }
-        .prose-daygo a:hover { color: var(--color-accent); }
-        .prose-daygo em { color: var(--color-text-muted); font-style: italic; }
-        .prose-daygo strong { color: var(--color-text); }
-        .prose-daygo hr { border-color: rgba(255,255,255,0.08); margin: 2rem 0; }
-        .prose-daygo code { background: rgba(255,255,255,0.06); padding: 0.1em 0.35em; border-radius: 4px; font-size: 0.9em; }
+        .prose-daygo h1 { font-size: clamp(2.5rem, 6vw, 3.5rem); font-weight: 900; text-transform: uppercase; letter-spacing: -0.04em; line-height: 0.9; margin-bottom: 1.5rem; color: #000; }
+        .prose-daygo h2 { font-size: 1.375rem; font-weight: 700; margin-top: 2.75rem; margin-bottom: 0.75rem; color: #000; }
+        .prose-daygo h3 { font-size: 1.0625rem; font-weight: 700; margin-top: 1.75rem; margin-bottom: 0.5rem; color: #000; }
+        .prose-daygo p { margin: 0.85rem 0; line-height: 1.7; font-size: 0.9375rem; color: rgba(0,0,0,0.68); }
+        .prose-daygo ul { margin: 0.85rem 0; padding-left: 1.25rem; list-style: disc; color: rgba(0,0,0,0.68); }
+        .prose-daygo ol { margin: 0.85rem 0; padding-left: 1.25rem; list-style: decimal; color: rgba(0,0,0,0.68); }
+        .prose-daygo li { margin: 0.35rem 0; line-height: 1.6; font-size: 0.9375rem; }
+        .prose-daygo a { color: #000; text-decoration: underline; text-decoration-color: ${LIME}; text-decoration-thickness: 3px; text-underline-offset: 3px; }
+        .prose-daygo a:hover { background: ${LIME}; }
+        .prose-daygo em { color: rgba(0,0,0,0.5); font-style: italic; }
+        .prose-daygo strong { color: #000; font-weight: 700; }
+        .prose-daygo hr { border: 0; border-top: 1px solid rgba(0,0,0,0.12); margin: 2.5rem 0; }
+        .prose-daygo code { background: rgba(0,0,0,0.06); padding: 0.1em 0.35em; border-radius: 4px; font-size: 0.875em; }
+        .prose-daygo table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; font-size: 0.875rem; }
+        .prose-daygo th, .prose-daygo td { border: 1px solid rgba(0,0,0,0.12); padding: 0.5rem 0.75rem; text-align: left; }
+        .prose-daygo th { font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.6875rem; }
       `}</style>
       <Footer />
     </>

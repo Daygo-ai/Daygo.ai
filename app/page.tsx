@@ -110,9 +110,9 @@ function Hero() {
             <div className="relative overflow-hidden rounded-[2.25rem]">
               <Image
                 src="/redesign/app-today.jpg"
-                alt="The Daygo Today screen, showing readiness, recovery trend and the day's run"
-                width={852}
-                height={1846}
+                alt="The Daygo Today screen, showing readiness, recovery trend, resting heart rate and sleep"
+                width={923}
+                height={2000}
                 sizes="(max-width: 768px) 80vw, 290px"
                 priority
                 className="w-full"

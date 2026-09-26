@@ -11,8 +11,7 @@ export function Nav() {
   return (
     <header className="flex items-center justify-between bg-black px-6 py-5 text-white md:px-10">
       <Link href="/" className="flex items-center gap-2">
-        <Image src="/logo.png" alt="" width={22} height={22} className="rounded-full" />
-        <span className="text-lg font-black tracking-tight">DAYGO</span>
+        <Image src="/daygo-wordmark.webp" alt="Daygo" width={2000} height={302} priority className="h-[18px] w-auto" />
       </Link>
 
       <nav className="hidden items-center gap-9 text-[13px] text-white/75 md:flex">

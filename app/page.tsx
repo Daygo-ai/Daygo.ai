@@ -131,7 +131,7 @@ function Hero() {
             width={1219}
             height={1290}
             sizes="22vw"
-            className="pointer-events-none absolute -bottom-6 -right-14 hidden w-[13rem] max-w-none select-none lg:block"
+            className="pointer-events-none absolute -bottom-6 -right-28 hidden w-[13rem] max-w-none select-none lg:block"
           />
         </div>
       </div>

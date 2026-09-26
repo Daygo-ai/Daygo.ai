@@ -11,8 +11,8 @@ export function Footer() {
         <div className="grid gap-10 md:grid-cols-[1.4fr_1fr_1fr_1fr]">
           <div>
             <div className="flex items-center gap-2">
-              <Image src="/logo.png" alt="" width={22} height={22} className="rounded-full" />
-              <span className="text-lg font-black tracking-tight">DAYGO</span>
+              {/* White wordmark, inverted to black on the bone footer. */}
+              <Image src="/daygo-wordmark.webp" alt="Daygo" width={2000} height={302} className="h-[18px] w-auto invert" />
             </div>
             <p className="mt-3 font-mono text-[10px] uppercase leading-relaxed tracking-widest text-black/50">
               A healthier tomorrow, today.

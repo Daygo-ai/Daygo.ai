@@ -104,25 +104,16 @@ function Hero() {
             />
           </div>
 
-          {/* device frame — the screenshot already carries its own status
-              bar and home indicator, so the frame only adds bezel + island */}
-          <div className="relative mx-auto w-full max-w-[290px] rounded-[2.75rem] bg-black p-[9px] shadow-2xl ring-1 ring-white/15">
-            <div className="relative overflow-hidden rounded-[2.25rem]">
-              <Image
-                src="/redesign/app-today.jpg"
-                alt="The Daygo Today screen, showing readiness, recovery trend, resting heart rate and sleep"
-                width={923}
-                height={2000}
-                sizes="(max-width: 768px) 80vw, 290px"
-                priority
-                className="w-full"
-              />
-              <div
-                aria-hidden
-                className="absolute left-1/2 top-[9px] h-[22px] w-[78px] -translate-x-1/2 rounded-full bg-black"
-              />
-            </div>
-          </div>
+          {/* the supplied device mockup — frame, island and screen in one image */}
+          <Image
+            src="/redesign/phone-mockup.webp"
+            alt="The Daygo Today screen, showing readiness, recovery trend, resting heart rate and weight"
+            width={942}
+            height={1914}
+            sizes="(max-width: 768px) 80vw, 310px"
+            priority
+            className="relative mx-auto w-full max-w-[310px] drop-shadow-2xl"
+          />
 
           {/* handwritten note + arrow, curving down toward the phone */}
           <Image

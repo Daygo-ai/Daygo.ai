@@ -104,16 +104,22 @@ function Hero() {
             />
           </div>
 
-          {/* the supplied device mockup — frame, island and screen in one image */}
-          <Image
-            src="/redesign/phone-mockup.webp"
-            alt="The Daygo Today screen, showing readiness, recovery trend, resting heart rate and weight"
-            width={942}
-            height={1914}
-            sizes="(max-width: 768px) 80vw, 310px"
-            priority
-            className="relative mx-auto w-full max-w-[310px] drop-shadow-2xl"
-          />
+          {/* device frame playing a loop of the real Today screen */}
+          <div className="relative mx-auto w-full max-w-[310px] rounded-[3rem] bg-[#1a1a1a] p-[9px] shadow-2xl ring-1 ring-white/15">
+            <video
+              className="block aspect-[1320/2868] w-full rounded-[2.5rem] bg-black object-cover"
+              autoPlay
+              muted
+              loop
+              playsInline
+              preload="auto"
+              poster="/redesign/app-today-poster.jpg"
+              aria-label="The Daygo Today screen, showing readiness, recovery, sleep, HRV, heart rate and the latest workout"
+            >
+              <source src="/redesign/app-today-loop.webm" type="video/webm" />
+              <source src="/redesign/app-today-loop.mp4" type="video/mp4" />
+            </video>
+          </div>
 
           {/* handwritten note + arrow, curving down toward the phone */}
           <Image

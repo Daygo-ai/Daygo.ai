@@ -1,3 +1,5 @@
+import { coreMarkers } from "./markers-core";
+
 export type Marker = {
   slug: string;
   name: string;
@@ -16,7 +18,7 @@ export type Marker = {
 // (BiomarkerEntry.swift) and citation list (SourcesView.swift) — kept in
 // sync deliberately so the website never claims something the app itself
 // doesn't already stand behind.
-export const markers: Marker[] = [
+const firstMarkers: Marker[] = [
   {
     slug: "vitamin-d",
     name: "Vitamin D",
@@ -132,6 +134,8 @@ export const markers: Marker[] = [
     source: { org: "MedlinePlus (NIH)", url: "https://medlineplus.gov/laboratorytests.html" },
   },
 ];
+
+export const markers: Marker[] = [...firstMarkers, ...coreMarkers];
 
 export function getMarker(slug: string): Marker | undefined {
   return markers.find((m) => m.slug === slug);

@@ -50,7 +50,7 @@ export default async function MarkerPage({ params }: { params: Promise<{ marker:
             </Link>
           </div>
 
-          <h1 className="mt-8 text-[12vw] font-black uppercase leading-[0.85] tracking-tighter sm:text-[7vw] md:text-[3.7rem]">
+          <h1 className="mt-8 text-[12vw] font-black uppercase leading-[0.85] tracking-tighter [overflow-wrap:anywhere] sm:text-[7vw] md:text-[3.7rem]">
             {marker.name}
           </h1>
           <p className="mt-5 max-w-2xl text-[15px] leading-relaxed text-black/70">{marker.summary}</p>

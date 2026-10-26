@@ -33,20 +33,20 @@ export function HeroHeadline() {
   return (
     <h1 className="text-[14vw] font-black uppercase leading-[0.82] tracking-tighter sm:text-[9vw] md:text-[5.4rem]">
       <motion.span className="block" {...line(0)}>
-        Turn
+        Turn{" "}
       </motion.span>
       <motion.span className="block" {...line(1)}>
-        Your Data
+        Your Data{" "}
       </motion.span>
       <motion.span className="block" {...line(2)}>
         Into{" "}
         <span className="relative inline-block" style={{ color: LIME }}>
           <span className="relative z-10">A</span>
-        </span>
+        </span>{" "}
       </motion.span>
 
       <motion.span className="relative block w-fit" style={{ color: LIME }} {...line(3)}>
-        <span className="relative z-10">Clearer</span>
+        <span className="relative z-10">Clearer</span>{" "}
         {/* Positioning lives on a plain span: motion writes its own transform,
             which would otherwise clobber the -translate centring. */}
         <span
@@ -73,7 +73,7 @@ export function HeroHeadline() {
       </motion.span>
 
       <motion.span className="block" {...line(4)}>
-        Today
+        Today{" "}
       </motion.span>
     </h1>
   );

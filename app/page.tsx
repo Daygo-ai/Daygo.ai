@@ -9,9 +9,36 @@ import { HeroHeadline } from "@/components/HeroHeadline";
 // The marketing home page. Chrome (nav/footer) and brand tokens are shared
 // with the legal, support and labs pages so the site reads as one thing.
 
+// Tells search and AI answer engines what Daygo is: an iPhone app, free to
+// download, from the Daygo organisation.
+const appJsonLd = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "MobileApplication",
+      name: "Daygo",
+      operatingSystem: "iOS",
+      applicationCategory: "HealthApplication",
+      description:
+        "An AI health coach that remembers you, built on your sleep, training, food and lab work.",
+      url: "https://daygo.ai",
+      downloadUrl: APP_STORE_URL,
+      offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+    },
+    {
+      "@type": "Organization",
+      name: "Daygo",
+      url: "https://daygo.ai",
+      logo: "https://daygo.ai/logo.png",
+      email: "hello@daygo.ai",
+    },
+  ],
+};
+
 export default function HomePage() {
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(appJsonLd) }} />
       <Nav />
       <main>
         <Hero />

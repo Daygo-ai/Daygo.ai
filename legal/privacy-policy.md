@@ -1,6 +1,6 @@
 # Daygo — Privacy Policy
 
-_Last updated: 2026-07-21_
+_Last updated: 2026-10-30_
 _Operator: Marijus Dovydaitis ("we", "our")_
 
 ## 1. What this policy covers
@@ -21,15 +21,22 @@ Daygo is a personal wellbeing app. This policy explains what personal data Daygo
 - You grant this permission explicitly, per data type, and can revoke it at any time in iOS Settings → Privacy & Security → Health.
 - Health data read from HealthKit stays on your device unless it is needed to generate an AI response, in which case the relevant subset is sent to Anthropic's Claude API (see section 3). We never use HealthKit data for advertising, and we never sell or share it with data brokers.
 
-### 2.3 Authentication data
+### 2.3 Garmin Connect data
+- If you choose **Connect Garmin** (in onboarding or Settings), you sign in on Garmin's own page and choose what to share. Daygo never sees your Garmin password.
+- With your permission, Garmin sends us: daily summaries (steps, resting heart rate, stress, Body Battery), sleep (duration, stages and their timing, sleep score), overnight heart rate variability, and your activities (type, time, distance, duration, calories, heart rate, and the GPS route with heart rate along it).
+- Unlike Apple Health data, Garmin data is delivered to our servers, so it is **stored in our Supabase database** (EU), linked to your Daygo account and visible only to you.
+- We use it only to give *you* your readiness, charts, 3D route maps and coaching. It is never sold, never shared with advertisers or data brokers, and never used to train or improve AI models.
+- You can disconnect at any time in Settings → Garmin connected. Disconnecting removes Daygo's access at Garmin and **deletes your Garmin data from Daygo**. Removing Daygo in your Garmin Connect account does the same.
+
+### 2.4 Authentication data
 - If you sign in with Apple, we receive a user identifier and (if you grant it) your name and a private-relay email. We never receive your real Apple ID password.
 
-### 2.4 Device and diagnostic data
+### 2.5 Device and diagnostic data
 - A vendor-scoped device identifier (`identifierForVendor`) used for rate limiting.
 - Device type, OS version, and app version sent to crash-reporting (Sentry).
 - A push notification token, if you grant notification permission.
 
-### 2.5 What we don't collect
+### 2.6 What we don't collect
 - No advertising identifiers. No third-party trackers. No analytics SDKs that build a behavioral profile of you. No location beyond your timezone.
 
 ## 3. How we use your data
@@ -39,18 +46,41 @@ Daygo is a personal wellbeing app. This policy explains what personal data Daygo
 - **Send you push notifications.** Only when you've enabled them.
 - **Diagnose crashes and bugs** via Sentry.
 
-We do not sell your data. We do not share it with advertisers.
+We do not sell your data. We do not share it with advertisers. We never use your data, including Garmin and Apple Health data, to train or improve AI models.
+
+## 3a. AI transparency
+
+Daygo's coach is an AI, not a person and not a clinician.
+- **What it sees:** when you chat with it or it prepares your daily brief, the relevant part of your data — profile, recent logs and journal notes, sleep, HRV, heart rate, workouts, lab values and Garmin data — is sent to Anthropic's Claude API to write the reply.
+- **What it remembers:** Daygo keeps a list of things it has learned about you from your conversations. You can see, edit and delete them in Settings → Memory.
+- **No training:** Anthropic processes this data under its commercial terms and does not use it to train its models. Neither do we.
+- **Your choice:** you agree to AI processing when you start using the coach. You can withdraw at any time by not using the AI features and deleting your conversations and memories, or by deleting your account. Logging, charts and Apple Health or Garmin data keep working without the AI.
+- AI replies can be wrong. They are not medical advice (see section 9).
 
 ## 4. Where your data lives
 
 - **On your device** by default (SwiftData, Keychain).
-- **In our Supabase project** when you're signed in: profile, daily verdicts, journals, weekly intents. Storage is in the EU (AWS `eu-west-1`, Ireland).
+- **In our Supabase project** when you're signed in: profile, daily verdicts, journals, weekly intents, and Garmin data if you connected Garmin. Storage is in the EU (AWS `eu-west-1`, Ireland).
 - **In transit** to and from Anthropic's API for AI features. Anthropic stores prompt data per their commercial agreement and does not train on it.
 - **Apple Health data** stays on your device. We read it locally and only transmit the specific values needed for an AI response; we do not bulk-upload your Health data to our servers.
+
+### Who processes your data
+
+| Service | What for | Data |
+|---|---|---|
+| Supabase | Database, sign-in, server functions | Account, logs, journals, Garmin data |
+| Anthropic (Claude API) | AI coaching replies and briefs | The subset of your data needed for each reply |
+| Garmin | Source of Garmin data, only if you connect it | Garmin sends data to us; we send Garmin nothing about you |
+| Apple | Sign in with Apple, push notifications, HealthKit on your device | Sign-in identifier, push token |
+| Sentry | Crash reports | Device type, OS and app version, crash details |
+| Vercel | Hosting the daygo.ai website | Standard web server logs |
+
+Each processes your data only to provide its service to Daygo.
 
 ## 5. Retention
 
 - Account data: kept until you delete your account, then erased within 30 days.
+- Garmin data: kept while Garmin is connected; deleted when you disconnect Garmin or delete your account.
 - Crash logs: 90 days.
 - API request/response logs (rate limiting): 30 days.
 
@@ -59,7 +89,10 @@ We do not sell your data. We do not share it with advertisers.
 You can:
 - See and export everything we have on you (in-app: Settings → Export PDF; or by emailing privacy@daygo.ai).
 - Delete your account and all server-side data.
-- Disable any class of data collection (Apple Health access, push notifications, crash reporting) in Settings.
+- Correct anything Daygo has learned about you (Settings → Memory), or ask us to correct other data.
+- Disconnect Garmin, which deletes your Garmin data from Daygo.
+- Withdraw consent for AI processing or health data at any time (see section 3a).
+- Disable any class of data collection (Apple Health access, Garmin, push notifications, crash reporting).
 - (EU/UK) Object to processing, request restriction, or lodge a complaint with your local supervisory authority.
 - (CA/US) Know what we collect, request deletion, opt out of "selling" or "sharing" — we don't do either.
 

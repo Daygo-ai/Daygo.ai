@@ -1,0 +1,31 @@
+# Daygo
+
+> Daygo is an AI health coach for iPhone. It reads your sleep, heart-rate variability (HRV), resting heart rate, workouts, food logs and blood test results, remembers what you tell it, and explains in plain English what today needs. It is a wellbeing tool, not a medical device.
+
+## What Daygo does
+
+- Coach chat: ask about your sleep, training, energy or lab results; the coach remembers your goals and past conversations.
+- Apple Health: reads sleep stages, HRV, resting heart rate and workouts from Apple Watch, Garmin and other wearables that sync to Apple Health. No extra band or hardware needed.
+- Blood tests: photograph a lab results page and Daygo reads the markers and explains each one against its reference range.
+- Daily plan: a short read each morning on what your body needs today, based on recovery, sleep and recent training.
+- Running: running plans and pace suggestions from your recent runs.
+
+## Who it's for
+
+People with an iPhone (and usually a smartwatch) who want their health data explained and turned into simple daily actions, without paying for a dedicated band like Whoop.
+
+## Pricing
+
+Free to download from the App Store. Daygo Pro is a subscription (weekly or yearly); the yearly plan starts with a free trial. A few chat messages are free before subscribing.
+
+## Key pages
+
+- [Home](https://daygo.ai): what Daygo is, features, pricing and FAQ
+- [Lab markers](https://daygo.ai/labs): plain-English guides to blood test markers (what each one means, normal ranges, what helps, when to see a doctor)
+- [App Store](https://apps.apple.com/us/app/daygo-ai/id6773255641): download Daygo
+- [Privacy policy](https://daygo.ai/privacy)
+- [Support](https://daygo.ai/support)
+
+## Contact
+
+hello@daygo.ai

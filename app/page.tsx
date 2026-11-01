@@ -23,6 +23,14 @@ const appJsonLd = {
         "An AI health coach that remembers you, built on your sleep, training, food and lab work.",
       url: "https://daygo.ai",
       downloadUrl: APP_STORE_URL,
+      installUrl: APP_STORE_URL,
+      sameAs: [APP_STORE_URL],
+      featureList: [
+        "AI health coach chat that remembers your goals and history",
+        "Sleep, HRV and resting heart rate from Apple Health",
+        "Blood test reading: photograph results, get plain-English context",
+        "Running plans and daily recommendations",
+      ],
       offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
     },
     {
@@ -39,6 +47,7 @@ export default function HomePage() {
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(appJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd()) }} />
       <Nav />
       <main>
         <Hero />
@@ -655,6 +664,18 @@ function Pricing() {
 
 const FAQS = [
   {
+    q: "What is Daygo?",
+    a: "Daygo is an AI health coach for iPhone. It reads your sleep, heart-rate variability, resting heart rate, workouts, food logs and blood test results, remembers what you tell it, and turns all of that into a plain-English read on what today needs.",
+  },
+  {
+    q: "Does Daygo work with Apple Watch and Garmin?",
+    a: "Yes. Daygo reads whatever your Apple Watch, Garmin or other wearable writes to Apple Health: sleep stages, heart-rate variability, resting heart rate and workouts.",
+  },
+  {
+    q: "How is Daygo different from Whoop or Bevel?",
+    a: "Daygo needs no extra hardware or band subscription: it works with the watch you already have. Instead of only showing scores, it's a coach you can talk to that remembers your goals and past conversations, and it reads your blood test results alongside your sleep and training.",
+  },
+  {
     q: "What do I need to start?",
     a: "An iPhone. Connecting Apple Health makes Daygo far more useful, but you can type things in by hand and still get a plan.",
   },
@@ -675,6 +696,15 @@ const FAQS = [
     a: "In your iPhone's subscription settings, the same place as every other App Store subscription. Cancelling there stops the renewal immediately.",
   },
 ];
+
+/** The FAQ below as FAQPage schema, which search and AI answers quote directly. */
+function faqJsonLd() {
+  return {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: FAQS.map((f) => ({ "@type": "Question", name: f.q, acceptedAnswer: { "@type": "Answer", text: f.a } })),
+  };
+}
 
 function Faq() {
   return (

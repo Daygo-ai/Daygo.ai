@@ -1,6 +1,6 @@
 import { Nav } from "@/components/Nav";
 import { Footer } from "@/components/Footer";
-import { markers, getMarker } from "@/lib/markers";
+import { markers, getMarker, faqFor } from "@/lib/markers";
 import { BONE, LIME } from "@/lib/brand";
 import { notFound } from "next/navigation";
 import Link from "next/link";
@@ -35,6 +35,12 @@ export default async function MarkerPage({ params }: { params: Promise<{ marker:
     citation: marker.source.url,
     lastReviewed: new Date().toISOString().slice(0, 10),
   };
+  const faq = faqFor(marker);
+  const faqLd = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: faq.map(({ q, a }) => ({ "@type": "Question", name: q, acceptedAnswer: { "@type": "Answer", text: a } })),
+  };
 
   return (
     <>
@@ -42,6 +48,7 @@ export default async function MarkerPage({ params }: { params: Promise<{ marker:
       <main style={{ background: BONE }} className="px-6 py-16 text-black md:px-10 md:py-24">
         <div className="mx-auto max-w-4xl">
           <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+          <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqLd) }} />
 
           <div className="flex items-center justify-between font-mono text-[10px] uppercase tracking-widest text-black/45">
             <span>{marker.category}</span>
@@ -83,6 +90,17 @@ export default async function MarkerPage({ params }: { params: Promise<{ marker:
 
           <Section n="03" title="When to talk to a doctor">
             <p className="text-[14.5px] leading-relaxed text-black/70">{marker.whenToTalkToDoctor}</p>
+          </Section>
+
+          <Section n="04" title="Common questions">
+            <div className="space-y-6">
+              {faq.map(({ q, a }) => (
+                <div key={q}>
+                  <h3 className="text-[15px] font-semibold">{q}</h3>
+                  <p className="mt-1.5 text-[14.5px] leading-relaxed text-black/70">{a}</p>
+                </div>
+              ))}
+            </div>
           </Section>
 
           <p className="mt-14 border-t border-black/10 pt-6 text-[12.5px] leading-relaxed text-black/55">

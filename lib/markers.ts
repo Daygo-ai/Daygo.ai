@@ -1,4 +1,5 @@
 import { coreMarkers } from "./markers-core";
+import { bloodMarkers } from "./markers-blood";
 
 export type Marker = {
   slug: string;
@@ -13,6 +14,18 @@ export type Marker = {
   whenToTalkToDoctor: string;
   source: { org: string; url: string };
 };
+
+/** Common questions for a marker page, answered from the page's own content,
+ *  so each page's FAQ (and its FAQPage schema) is specific to that marker. */
+export function faqFor(m: Marker): { q: string; a: string }[] {
+  const short = m.name.replace(/\s*\(.*\)$/, "");
+  return [
+    { q: `What is ${short}?`, a: m.summary },
+    { q: `What is a normal ${short} level?`, a: `Daygo uses ${m.range} as the reference range. ${m.reading}` },
+    { q: `How can I improve my ${short}?`, a: m.mayHelp.join(". ") + "." },
+    { q: `When should I see a doctor about ${short}?`, a: m.whenToTalkToDoctor },
+  ];
+}
 
 // Content mirrors the app's own biomarker interpretation logic
 // (BiomarkerEntry.swift) and citation list (SourcesView.swift) — kept in
@@ -135,7 +148,7 @@ const firstMarkers: Marker[] = [
   },
 ];
 
-export const markers: Marker[] = [...firstMarkers, ...coreMarkers];
+export const markers: Marker[] = [...firstMarkers, ...coreMarkers, ...bloodMarkers];
 
 export function getMarker(slug: string): Marker | undefined {
   return markers.find((m) => m.slug === slug);

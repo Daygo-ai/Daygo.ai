@@ -28,6 +28,7 @@ export function Footer() {
                 {l.label}
               </FooterLink>
             ))}
+            <FooterLink href="/clinic">Clinic sign in</FooterLink>
           </FooterCol>
 
           <FooterCol title="Legal">

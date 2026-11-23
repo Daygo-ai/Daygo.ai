@@ -11,9 +11,10 @@ import { setLiveContext } from "./data";
 import { DotColumns, RouteTerrain } from "./terrain";
 import { reportMeta, reportsOf, ReportTable, RangeFlag, toReview, UploadModal } from "./labs";
 import { ACCENT, liquid as apple, LiquidGlassDefs, GRAD, gradStyle, Icon, StatCard } from "./glass";
+import { AuditView, ExportButtons, InboxView, initLang, Lang, setLang, SettingsView, t, TeamView, useIdleSignOut, useInboxCount, VisitHistory } from "./extras";
 import { AuraCurve, AuraPill, changePill, FrostBackground, glass, glassDark, iconBtn, pill, pillOn } from "./glass";
 
-type View = "today" | "patients" | "tests" | "add";
+type View = "today" | "patients" | "tests" | "add" | "inbox" | "team" | "settings" | "audit";
 const KEY = "daygo_clinic_demo_v1";
 const fmt = (iso: string, o: Intl.DateTimeFormatOptions = { day: "numeric", month: "short" }) => new Date(iso.slice(0, 10) + "T12:00:00").toLocaleDateString("en-GB", o);
 const uid = () => Math.random().toString(36).slice(2, 9);
@@ -34,7 +35,7 @@ function Avatar({ p, size = 36 }: { p: Patient; size?: number }) {
 }
 
 /** Set once live mode is ready; actions also write to clinic-api when present. */
-let LIVE: { clinicId: string; clinicName: string; me: string } | null = null;
+let LIVE: { clinicId: string; clinicName: string; me: string; role: string; timeoutMin: number } | null = null;
 
 type Mode = "loading" | "login" | "setup" | "live" | "demo";
 /** The demo (fictional patients) only on localhost, or with ?demo=1 for sales calls. */
@@ -44,7 +45,9 @@ function LiveGate({ mode, onDemo, onCreated }: { mode: Mode; onDemo: () => void;
   const [email, setEmail] = useState(""), [sent, setSent] = useState(false), [err, setErr] = useState("");
   const [clinic, setClinic] = useState(""), [me, setMe] = useState("");
   const [demoOK, setDemoOK] = useState(false);
-  useEffect(() => setDemoOK(showDemo()), []);
+  const [timedOut, setTimedOut] = useState(false);
+  const [, setL] = useState<Lang>("en");
+  useEffect(() => { setDemoOK(showDemo()); setL(initLang()); try { if (sessionStorage.getItem("dgc_timeout")) { setTimedOut(true); sessionStorage.removeItem("dgc_timeout"); } } catch {} }, []);
   const redirectTo = typeof window !== "undefined" ? `${window.location.origin}/clinic` : undefined;
   const box = "w-full max-w-[420px] rounded-[28px] border border-white/20 bg-white/[.08] p-8 text-white shadow-[0_30px_60px_-30px_rgba(0,0,0,.6)] backdrop-blur-[30px]";
   const input = "mt-1 w-full rounded-xl border border-white/20 bg-white/10 px-3 py-2.5 text-[15px] text-white outline-none placeholder:text-white/40 focus:border-white/50";
@@ -53,22 +56,26 @@ function LiveGate({ mode, onDemo, onCreated }: { mode: Mode; onDemo: () => void;
     <div className="relative isolate grid min-h-screen place-items-center px-4">
       <FrostBackground />
       <div className={box}>
-        <img src="/clinic/daygo-white.svg" alt="Daygo" className="h-[16px] w-auto" />
-        <div className="mt-1 text-[11px] uppercase tracking-[.2em] text-white/55">Clinics</div>
+        <div className="flex items-start">
+          <div><img src="/clinic/daygo-white.svg" alt="Daygo" className="h-[16px] w-auto" />
+          <div className="mt-1 text-[11px] uppercase tracking-[.2em] text-white/55">Clinics</div></div>
+          <div className="ml-auto flex gap-1 text-[12px]">{(["en", "lt"] as const).map((l) => <button key={l} onClick={() => { setLang(l); setL(l); }} className="rounded-full px-2 py-0.5 uppercase text-white/70 hover:bg-white/10">{l}</button>)}</div>
+        </div>
         {mode === "loading" && <p className="mt-8 text-white/70">Loading…</p>}
         {mode === "login" && (sent ? (
           <p className="mt-8 text-[15px] text-white/85">Check {email} for a sign-in link. Open it on this computer.</p>
         ) : (
           <>
-            <h1 className="mt-8 text-[28px] font-light leading-tight">Sign in to your clinic</h1>
-            <label className="mt-5 block text-[13px] text-white/70">Work email
+            {timedOut && <p className="mt-6 rounded-xl bg-white/10 px-3 py-2 text-[13px] text-white/85">{t("You were signed out after inactivity.")}</p>}
+            <h1 className="mt-8 text-[28px] font-light leading-tight">{t("Sign in to your clinic")}</h1>
+            <label className="mt-5 block text-[13px] text-white/70">{t("Work email")}
               <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@clinic.lt" className={input} /></label>
             <button disabled={!email.includes("@")} className={btn} onClick={async () => {
               setErr("");
               const { error } = await sb().auth.signInWithOtp({ email: email.trim(), options: { emailRedirectTo: redirectTo } });
               if (error) setErr(error.message); else setSent(true);
-            }}>Email me a sign-in link</button>
-            <button className="mt-2 w-full rounded-full border border-white/25 py-2.5 text-[15px] text-white" onClick={() => sb().auth.signInWithOAuth({ provider: "google", options: { redirectTo } })}>Continue with Google</button>
+            }}>{t("Email me a sign-in link")}</button>
+            <button className="mt-2 w-full rounded-full border border-white/25 py-2.5 text-[15px] text-white" onClick={() => sb().auth.signInWithOAuth({ provider: "google", options: { redirectTo } })}>{t("Continue with Google")}</button>
           </>
         ))}
         {mode === "setup" && (
@@ -108,10 +115,11 @@ export default function ClinicApp() {
   const [mode, setMode] = useState<Mode>("loading");
   const loadLive = async () => {
     try {
-      const me = await api<{ memberships: { clinic_id: string; display_name: string | null; clinics: { name: string } }[] }>("me");
+      const me = await api<{ memberships: { clinic_id: string; role: string; display_name: string | null; clinics: { name: string } }[] }>("me");
       if (!me.memberships.length) { setMode("setup"); return; }
       const m = me.memberships[0];
-      LIVE = { clinicId: m.clinic_id, clinicName: m.clinics?.name ?? "Clinic", me: m.display_name ?? "Clinician" };
+      const st = await api<{ clinic: { settings: { timeout_min?: number } } }>("settings", { clinic_id: m.clinic_id }).catch(() => null);
+      LIVE = { clinicId: m.clinic_id, clinicName: m.clinics?.name ?? "Clinic", me: m.display_name ?? "Clinician", role: m.role ?? "clinician", timeoutMin: st?.clinic?.settings?.timeout_min ?? 30 };
       setLiveContext(LIVE.me);
       const r = await api<{ patients: any[] }>("roster", { clinic_id: m.clinic_id, days: 90 });
       setPatients(r.patients.map((p, i) => toPatient(p, i, LIVE!.me)));
@@ -150,7 +158,25 @@ export default function ClinicApp() {
 
   const patch = (id: string, fn: (p: Patient) => Patient) => setPatients((ps) => ps.map((p) => (p.id === id ? fn(structuredClone(p)) : p)));
   const open = (id: string) => { setPid(id); setView("patients"); setPhonePid(id); window.scrollTo({ top: 0 }); };
-  const remind = (p: Patient, what: string) => setToast(LIVE ? `${p.first}'s app will show "${what}" (push reminders coming soon)` : `Reminder sent to ${p.first}: ${what} (demo)`);
+  const remind = (p: Patient, what: string, marker?: string) => {
+    if (!LIVE) { setToast(`Reminder sent to ${p.first}: ${what} (demo)`); return; }
+    if (!p.id || !patients.some((x) => x.id === p.id)) { setToast("Open each patient to remind them individually"); return; }
+    api<{ push: { sent: number; reason?: string } }>("remind", { clinic_id: LIVE.clinicId, patient_id: p.id, text: `Please book your ${what}.`.replace("Please book your daily check-in.", "Please do your daily check-in in Daygo."), retest_marker: marker })
+      .then((r) => setToast(r.push.sent ? `Reminder sent to ${p.first}'s phone` : `Saved in ${p.first}'s app. Push not delivered (${r.push.reason === "no_devices" ? "no phone registered" : "push not set up yet"}).`))
+      .catch((e) => setToast(e.message));
+  };
+  const [lang, setLangUI] = useState<Lang>("en");
+  useEffect(() => { setLangUI(initLang()); }, []);
+  useIdleSignOut(mode === "live", LIVE?.timeoutMin ?? 30);
+  const unread = useInboxCount(mode === "live" ? LIVE?.clinicId ?? null : null);
+  const [showArchived, setShowArchived] = useState(false);
+  const active = patients.filter((p) => !p.archived);
+  const setArchived = (id: string, v: boolean) => {
+    patch(id, (p) => { p.archived = v; return p; });
+    if (LIVE) api(v ? "archive" : "unarchive", { clinic_id: LIVE.clinicId, patient_id: id }).catch((e) => setToast(e.message));
+    setToast(v ? "Patient archived. Their own sharing is unchanged." : "Patient restored");
+    if (v) { setPid(null); }
+  };
   const sendToApp = (id: string) => { setPhonePid(id); setPhoneOpen(true); setFlash(true); setTimeout(() => setFlash(false), 1200); };
   const saveLabs = (pid: string, date: string, lab: string, values: { marker: string; value: number }[], by: "patient" | "clinic" = "clinic") => {
     const reportId = `${pid}-${date}-${uid()}`;
@@ -178,7 +204,9 @@ export default function ClinicApp() {
   useEffect(() => { const f = (e: Event) => { setView((e as CustomEvent).detail); setPid(null); }; document.addEventListener("dg-nav", f); return () => document.removeEventListener("dg-nav", f); }, []);
   const current = patients.find((p) => p.id === pid) ?? null;
   const phoneP = patients.find((p) => p.id === phonePid) ?? patients[0];
-  const nav: [View, string][] = [["today", "Today"], ["patients", "Patients"], ["tests", "Tests"], ["add", "Add patient"]];
+  const nav: [View, string][] = [["today", t("Today")], ["inbox", t("Inbox")], ["patients", t("Patients")], ["tests", t("Tests")], ["add", t("Add patient")]];
+  const nav2: [View, string][] = LIVE ? [["team", t("Team")], ["settings", t("Settings")], ...(LIVE.role === "admin" ? [["audit", t("Audit log")] as [View, string]] : [])] : [];
+  void lang;
 
   if (mode === "loading" || mode === "login" || mode === "setup") return <LiveGate mode={mode} onDemo={startDemo} onCreated={loadLive} />;
 
@@ -201,11 +229,16 @@ export default function ClinicApp() {
         <nav className="mt-7 flex flex-col gap-1">
           {nav.map(([v, l]) => (
             <button key={v} onClick={() => { setView(v); setPid(null); }} className={`flex items-center gap-3 rounded-2xl px-4 py-3 text-left text-[15px] transition ${view === v ? "bg-white/20 font-medium shadow-[inset_0_1px_0_rgba(255,255,255,.25)] backdrop-blur" : "text-white/85 hover:bg-white/10"}`}>
-              <Icon n={({ today: "home", patients: "user", tests: "flask", add: "plus" } as const)[v]} /><span className="whitespace-nowrap">{l}</span>
+              <Icon n={(({ today: "home", patients: "user", tests: "flask", add: "plus", inbox: "clinic" } as const) as unknown as Record<string, "home">)[v] ?? "home"} /><span className="whitespace-nowrap">{l}</span>
+              {v === "inbox" && unread > 0 && <span className="ml-auto rounded-full bg-[#E6E46C] px-2 py-0.5 text-[11px] font-semibold text-[#111518]">{unread}</span>}
             </button>
           ))}
+          {!!nav2.length && <div className="mx-3 my-3 h-px bg-white/15" />}
+          {nav2.map(([v, l]) => (
+            <button key={v} onClick={() => { setView(v); setPid(null); }} className={`rounded-2xl px-4 py-2.5 text-left text-[14px] transition ${view === v ? "bg-white/20 font-medium" : "text-white/75 hover:bg-white/10"}`}>{l}</button>
+          ))}
           <div className="mx-3 my-3 h-px bg-white/15" />
-          <button onClick={() => setPhoneOpen((o) => !o)} className={`flex items-center gap-3 rounded-2xl px-4 py-3 text-left text-[15px] transition ${phoneOpen ? "bg-white/20 font-medium" : "text-white/85 hover:bg-white/10"}`}><Icon n="phone" /><span className="whitespace-nowrap">Patient view</span></button>
+          <button onClick={() => setPhoneOpen((o) => !o)} className={`flex items-center gap-3 rounded-2xl px-4 py-3 text-left text-[15px] transition ${phoneOpen ? "bg-white/20 font-medium" : "text-white/85 hover:bg-white/10"}`}><Icon n="phone" /><span className="whitespace-nowrap">{t("Patient view")}</span></button>
         </nav>
         <div className="mt-auto space-y-2">
           {!LIVE && <div className="rounded-full bg-white/15 px-3 py-1 text-center text-[11px] font-semibold uppercase tracking-wider text-white/80">Example data</div>}
@@ -216,21 +249,25 @@ export default function ClinicApp() {
       <header className="sticky top-0 z-30 border-b border-white/15 bg-white/10 text-white backdrop-blur-2xl lg:hidden">
         <div className="flex items-center gap-2 overflow-x-auto px-4 py-3">
           <img src="/clinic/daygo-white.svg" alt="Daygo" className="mr-2 h-[14px] w-auto shrink-0" />
-          {nav.map(([v, l]) => <button key={v} onClick={() => { setView(v); setPid(null); }} className={`whitespace-nowrap ${view === v ? pillOn : pill}`}>{l}</button>)}
+          {[...nav, ...nav2].map(([v, l]) => <button key={v} onClick={() => { setView(v); setPid(null); }} className={`whitespace-nowrap ${view === v ? pillOn : pill}`}>{l}{v === "inbox" && unread > 0 ? ` · ${unread}` : ""}</button>)}
           <button onClick={() => setPhoneOpen((o) => !o)} className={phoneOpen ? pillOn : pill}>📱</button>
         </div>
       </header>
 
       <div className={`flex gap-5 px-4 pb-16 pt-4 transition-[margin] duration-300 ease-out lg:pr-4 lg:pt-3 ${collapsed ? "lg:ml-[72px]" : "lg:ml-[246px]"}`}>
         <main className={`min-w-0 flex-1 px-1 text-white md:px-6`}>
-          {view === "today" && <Today patients={patients} open={open} remind={remind} upload={(id) => setUploadFor(id ?? null)} review={review} />}
-          {view === "patients" && !current && <Directory patients={patients} open={open} />}
-          {view === "patients" && current && <Profile p={current} upload={() => setUploadFor(current.id)} review={review} back={() => setPid(null)} patch={(fn) => patch(current.id, fn)} sendToApp={() => sendToApp(current.id)} remind={remind} toast={setToast} />}
-          {view === "tests" && <Tests patients={patients} open={open} remind={remind} patch={patch} />}
+          {view === "today" && <Today patients={active} open={open} remind={remind} upload={(id) => setUploadFor(id ?? null)} review={review} />}
+          {view === "patients" && !current && <Directory patients={showArchived ? patients : active} open={open} showArchived={showArchived} setShowArchived={setShowArchived} />}
+          {view === "patients" && current && <Profile p={current} setArchived={(v) => setArchived(current.id, v)} upload={() => setUploadFor(current.id)} review={review} back={() => setPid(null)} patch={(fn) => patch(current.id, fn)} sendToApp={() => sendToApp(current.id)} remind={remind} toast={setToast} />}
+          {view === "tests" && <Tests patients={active} open={open} remind={remind} patch={patch} />}
+          {view === "inbox" && (LIVE ? <InboxView clinicId={LIVE.clinicId} open={open} /> : <p className="pt-16 text-white/70">The inbox works with a real clinic account.</p>)}
+          {view === "team" && LIVE && <TeamView clinicId={LIVE.clinicId} toast={setToast} />}
+          {view === "settings" && LIVE && <SettingsView clinicId={LIVE.clinicId} toast={setToast} onLang={setLangUI} />}
+          {view === "audit" && LIVE && <AuditView clinicId={LIVE.clinicId} toast={setToast} />}
           {view === "add" && <AddPatient onAdd={(p) => { setPatients((ps) => [...ps, p]); setToast(`${p.first} invited`); }} patients={patients} open={open} />}
           <div className={`mt-10 flex flex-wrap items-center gap-3 border-t pt-5 text-[12px] border-white/15 text-white/55`}>
-            <span>All patients and data are fictional example data. Daygo shows what patients share. Clinicians make every clinical decision.</span>
-            {LIVE ? <button onClick={() => sb().auth.signOut().then(() => location.reload())} className="ml-auto underline underline-offset-2">Sign out</button> : <button onClick={reset} className="ml-auto underline underline-offset-2">Reset demo</button>}
+            <span>{LIVE ? "Daygo shows what patients choose to share. Clinicians make every clinical decision." : "All patients and data are fictional example data. Daygo shows what patients share. Clinicians make every clinical decision."}</span>
+            {LIVE ? <button onClick={() => sb().auth.signOut().then(() => location.reload())} className="ml-auto underline underline-offset-2">{t("Sign out")}</button> : <button onClick={reset} className="ml-auto underline underline-offset-2">Reset demo</button>}
           </div>
         </main>
 
@@ -275,10 +312,10 @@ function Today({ patients, open, remind, upload, review }: TodayProps) {
       <div>
         <div className="pb-4 pt-10 text-white md:pt-16">
           <div className="text-[11px] font-medium uppercase tracking-[.16em] text-white/70">{fmt(TODAY, { weekday: "long", day: "numeric", month: "long" })}{!LIVE && <> · <span style={{ color: ACCENT }}>●</span> Example data</>}</div>
-          <h1 className="mt-2 text-[clamp(32px,4vw,54px)] font-light leading-[1.02] tracking-[-.03em]">Good morning,<br />{LIVE ? LIVE.me : "Dr. Vaitkienė"}.</h1>
-          <p className="mt-3 max-w-md text-[15px] text-white/80">Here's what needs you today.</p>
+          <h1 className="mt-2 text-[clamp(32px,4vw,54px)] font-light leading-[1.02] tracking-[-.03em]">{t("Good morning,")}<br />{LIVE ? LIVE.me : "Dr. Vaitkienė"}.</h1>
+          <p className="mt-3 max-w-md text-[15px] text-white/80">{t("Here's what needs you today.")}</p>
           <div className={`${apple} bend mt-20 grid grid-cols-2 px-2 py-1 xl:grid-cols-4`}>
-            {([[appts.length, "Appointments today", () => jump("t-appts")], [reports.length, "New lab results", () => jump("t-labs")], [overdue.length + quiet.length, "Follow-ups", () => jump("t-follow")], [patients.filter((p) => p.status === "data_flowing").length, "Sharing data", () => document.dispatchEvent(new CustomEvent("dg-nav", { detail: "patients" }))]] as const).map(([v, l, f], i) => (
+            {([[appts.length, t("Appointments today"), () => jump("t-appts")], [reports.length, t("New lab results"), () => jump("t-labs")], [overdue.length + quiet.length, t("Follow-ups"), () => jump("t-follow")], [patients.filter((p) => p.status === "data_flowing").length, t("Sharing data"), () => document.dispatchEvent(new CustomEvent("dg-nav", { detail: "patients" }))]] as const).map(([v, l, f], i) => (
               <button key={l} onClick={f} className={`group px-5 py-5 text-left ${i ? "xl:border-l xl:border-white/12" : ""}`}>
                 <div className="text-[11px] font-medium uppercase tracking-[.14em] text-white/70">{l}</div>
                 <div className="mt-2 flex items-end gap-2"><span className="text-[48px] font-light leading-none tracking-tight">{v}</span><span className="mb-2 text-white/50 transition group-hover:translate-x-1 group-hover:text-white">→</span></div>
@@ -479,17 +516,20 @@ function reasonsOf(p: Patient): Reason[] {
 }
 const toneCls = { now: "bg-[#E6E46C] text-[#111518]", soon: "border border-white/35 text-white", info: "bg-white/10 text-white/75" };
 
-function Directory({ patients, open }: { patients: Patient[]; open: (id: string) => void }) {
+function Directory({ patients, open, showArchived, setShowArchived }: { patients: Patient[]; open: (id: string) => void; showArchived: boolean; setShowArchived: (v: boolean) => void }) {
   const [q, setQ] = useState(""), [prog, setProg] = useState("All"), [showOk, setShowOk] = useState(false);
+  const [sort, setSort] = useState<"urgent" | "name" | "visit">("urgent");
+  const progs = [...new Set([...PROGRAMMES, ...patients.map((p) => p.programme)])];
   const list = patients.filter((p) => (prog === "All" || p.programme === prog) && `${p.first} ${p.last} ${p.programme}`.toLowerCase().includes(q.toLowerCase()));
   const scored = list.map((p) => ({ p, rs: reasonsOf(p) })).map((x) => ({ ...x, score: x.rs.reduce((s, r) => s + r.w, 0) }));
   const attention = scored.filter((x) => x.rs.some((r) => r.tone === "now")).sort((a, b) => b.score - a.score);
   const coming = scored.filter((x) => !attention.includes(x) && x.rs.length).sort((a, b) => b.score - a.score);
   const ok = scored.filter((x) => !attention.includes(x) && !coming.includes(x)).sort((a, b) => a.p.last.localeCompare(b.p.last));
+  const bySort = (xs: typeof scored) => sort === "urgent" ? xs : [...xs].sort((a, b) => sort === "name" ? `${a.p.last}${a.p.first}`.localeCompare(`${b.p.last}${b.p.first}`) : (a.p.nextVisit ?? "9999").localeCompare(b.p.nextVisit ?? "9999"));
   const row = ({ p, rs }: (typeof scored)[number]) => (
     <li key={p.id}>
       <button onClick={() => open(p.id)} className="grid w-full grid-cols-[auto_1fr_auto] items-center gap-4 border-t border-white/12 py-4 text-left transition hover:bg-white/[.05] md:grid-cols-[260px_1fr_150px_24px]">
-        <span className="flex items-center gap-3"><Avatar p={p} size={36} /><span><b className="font-semibold">{p.first} {p.last}</b><span className="block text-[12px] text-white/55">{p.age ? `${p.age} · ` : ""}{p.programme}</span></span></span>
+        <span className="flex items-center gap-3"><Avatar p={p} size={36} /><span><b className="font-semibold">{p.first} {p.last}</b>{p.archived && <span className="ml-2 rounded-full bg-white/10 px-2 py-0.5 text-[11px] text-white/70">Archived</span>}<span className="block text-[12px] text-white/55">{p.age ? `${p.age} · ` : ""}{p.programme}</span></span></span>
         <span className="hidden flex-wrap gap-1.5 md:flex">{rs.length ? rs.map((r) => <span key={r.label} className={`rounded-full px-2.5 py-1 text-[12px] font-medium ${toneCls[r.tone]}`}>{r.label}</span>) : <span className="text-[13px] text-white/55">{oneLine(p)}</span>}</span>
         <span className="text-right text-[13px] text-white/70 md:text-left">{p.nextVisit ? <>Next visit<span className="block text-white">{fmt(p.nextVisit)} {p.nextVisit.slice(11)}</span></> : <span className="text-white/45">No visit booked</span>}</span>
         <span className="hidden text-white/50 md:block">→</span>
@@ -502,34 +542,39 @@ function Directory({ patients, open }: { patients: Patient[]; open: (id: string)
       <h1 className="pt-10 text-[clamp(34px,4vw,54px)] font-light leading-[1.02] tracking-[-.03em] md:pt-16">Patients</h1>
       <p className="mt-2 text-[16px] text-white/75">{attention.length} need you now · {coming.length} coming up · {ok.length} on track</p>
       <div className="mt-5 flex flex-wrap gap-2">
-        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by name or programme" className="w-full max-w-xs rounded-full border border-white/20 bg-white/10 px-4 py-2 text-[14px] text-white outline-none backdrop-blur placeholder:text-white/50 focus:border-white/50" />
-        {["All", ...PROGRAMMES].map((x) => <button key={x} onClick={() => setProg(x)} className={`rounded-full px-3.5 py-1.5 text-[13px] ${prog === x ? "bg-white text-[#111518]" : "border border-white/25"}`}>{x}</button>)}
+        <select value={sort} onChange={(e) => setSort(e.target.value as typeof sort)} aria-label={t("Sort")} className="rounded-full border border-white/25 bg-white/10 px-3 py-1.5 text-[13px] text-white">
+          <option className="text-black" value="urgent">{t("Sort")}: {t("Most urgent")}</option><option className="text-black" value="name">{t("Sort")}: {t("Name")}</option><option className="text-black" value="visit">{t("Sort")}: {t("Next visit")}</option>
+        </select>
+        <label className="flex items-center gap-2 text-[13px] text-white/80"><input type="checkbox" checked={showArchived} onChange={(e) => setShowArchived(e.target.checked)} className="accent-[#E6E46C]" />{t("Show archived")}</label>
+        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("Search by name or programme")} className="w-full max-w-xs rounded-full border border-white/20 bg-white/10 px-4 py-2 text-[14px] text-white outline-none backdrop-blur placeholder:text-white/50 focus:border-white/50" />
+        {["All", ...progs].map((x) => <button key={x} onClick={() => setProg(x)} className={`rounded-full px-3.5 py-1.5 text-[13px] ${prog === x ? "bg-white text-[#111518]" : "border border-white/25"}`}>{x}</button>)}
       </div>
 
       <section className="mt-10">
         <h2 className="text-[12px] font-semibold uppercase tracking-[.16em] text-white/75">1 · Needs you now · {attention.length}</h2>
         <p className="mt-1 text-[13px] text-white/55">New results to review, visits today and overdue tests. Most urgent first.</p>
-        <ul className="mt-3">{attention.map(row)}</ul>
+        <ul className="mt-3">{bySort(attention).map(row)}</ul>
         {!attention.length && <p className="py-6 text-white/60">Nothing needs you right now.</p>}
       </section>
 
       {!!coming.length && <section className="mt-10">
         <h2 className="text-[12px] font-semibold uppercase tracking-[.16em] text-white/75">2 · Coming up · {coming.length}</h2>
         <p className="mt-1 text-[13px] text-white/55">Visits tomorrow, missed check-ins and patients still setting up.</p>
-        <ul className="mt-3">{coming.map(row)}</ul>
+        <ul className="mt-3">{bySort(coming).map(row)}</ul>
       </section>}
 
       <section className="mt-10">
         <button onClick={() => setShowOk(!showOk)} aria-expanded={showOk} className="flex items-center gap-2 text-[12px] font-semibold uppercase tracking-[.16em] text-white/75 hover:text-white">On track · {ok.length} <span>{showOk ? "▲" : "▼"}</span></button>
-        {showOk && <ul className="mt-3">{ok.map(row)}</ul>}
+        {showOk && <ul className="mt-3">{bySort(ok).map(row)}</ul>}
       </section>
     </div>
   );
 }
 
-function Profile({ p, back, patch, sendToApp, remind, toast, upload, review }: {
+function Profile({ p, back, patch, sendToApp, remind, toast, upload, review, setArchived }: {
+  setArchived: (v: boolean) => void;
   upload: () => void; review: (pid: string, reportId: string) => void;
-  p: Patient; back: () => void; patch: (fn: (p: Patient) => Patient) => void; sendToApp: () => void; remind: (p: Patient, w: string) => void; toast: (s: string) => void;
+  p: Patient; back: () => void; patch: (fn: (p: Patient) => Patient) => void; sendToApp: () => void; remind: (p: Patient, w: string, marker?: string) => void; toast: (s: string) => void;
 }) {
   const [range, setRange] = useState<7 | 30 | 90>(30);
   const [marker, setMarker] = useState<string | null>(null);
@@ -542,7 +587,13 @@ function Profile({ p, back, patch, sendToApp, remind, toast, upload, review }: {
 
   return (
     <div>
-      <button onClick={back} className="mb-4 mt-8 text-[14px] md:mt-12 text-white/75 hover:text-white">← All patients</button>
+      <div className="mb-4 mt-8 flex flex-wrap items-center gap-2 md:mt-12">
+        <button onClick={back} className="text-[14px] text-white/75 hover:text-white">← {t("All patients")}</button>
+        <div className="ml-auto flex flex-wrap gap-2">
+          <ExportButtons clinicId={LIVE?.clinicId ?? null} p={p} toast={toast} />
+          <button onClick={() => (p.archived || confirm(`Archive ${p.first}? They leave your lists. Their app and their sharing choices are not changed; restore any time.`)) && setArchived(!p.archived)} className={btnSec}>{p.archived ? t("Restore patient") : t("Archive patient")}</button>
+        </div>
+      </div>
       <div className="flex flex-wrap items-center gap-4">
         <Avatar p={p} size={56} />
         <div>
@@ -562,6 +613,7 @@ function Profile({ p, back, patch, sendToApp, remind, toast, upload, review }: {
             </section>
           )}
           <PatientAI p={p} />
+          <VisitHistory clinicId={LIVE?.clinicId ?? null} p={p} toast={toast} />
           <section className={`${apple} p-6`}>
             <div className="flex items-baseline gap-2"><h2 className="text-[12px] font-semibold uppercase tracking-[.16em] text-white/80">Since the last visit</h2><span className={mono}>{since.length} days · AI summary</span></div>
             <ul className="mt-3 space-y-2 text-[15px] leading-snug">{sum.bullets.map((b, i) => <li key={i} className="flex gap-2.5"><span className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-[#E6E46C]" />{b}</li>)}</ul>
@@ -610,7 +662,7 @@ function Profile({ p, back, patch, sendToApp, remind, toast, upload, review }: {
                 <div className="min-w-0 flex-1"><b className="font-semibold">{r.label}</b><div className="text-[12px] text-white/60">{r.source === "guideline" ? `Guideline: ${r.sourceDetail}` : `Set by ${r.sourceDetail}`}</div></div>
                 <RetestStatus r={r} />
                 {r.status === "result_in" ? <button className={btnSec} onClick={() => { patch((x) => { x.retests = x.retests.map((y) => (y.id === r.id ? { ...y, status: "done" } : y)); return x; }); toast("Marked as reviewed"); }}>Mark reviewed</button>
-                  : <button className={btnSec} onClick={() => { remind(p, r.label); patch((x) => { x.retests = x.retests.map((y) => (y.id === r.id ? { ...y, status: "reminded" } : y)); return x; }); }}>Remind</button>}
+                  : <button className={btnSec} onClick={() => { remind(p, r.label, r.marker); patch((x) => { x.retests = x.retests.map((y) => (y.id === r.id ? { ...y, status: "reminded" } : y)); return x; }); }}>Remind</button>}
               </li>))}
               {!p.retests.length && <li className="py-3 text-white/60">None scheduled.</li>}
             </ul>

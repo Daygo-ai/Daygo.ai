@@ -113,6 +113,7 @@ export function toPatient(p: any, i: number, clinicianName: string): Patient {
       notes: ups.filter((u) => u.kind === "note").map((u) => ({ id: u.id, text: u.text, at: isoDay(u.created_at), by: clinicianName })),
     },
     color: COLORS[i % COLORS.length],
+    archived: !!p.archived_at,
     patientNotes: (p.patient_notes ?? []).map((n: any) => ({ id: n.id, text: n.text, at: isoDay(n.shared_at), ai: !!n.prepared_with_ai })),
   };
 }

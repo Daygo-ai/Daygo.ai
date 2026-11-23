@@ -73,6 +73,7 @@ export interface Patient {
   update: ClinicianUpdate;
   /** Notes the patient prepared (with Daygo) and chose to share. */
   patientNotes?: { id: string; text: string; at: string; ai: boolean }[];
+  archived?: boolean;
   color: string;
 }
 

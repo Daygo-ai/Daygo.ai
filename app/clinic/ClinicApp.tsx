@@ -11,7 +11,7 @@ import { setLiveContext } from "./data";
 import { DotColumns, RouteTerrain } from "./terrain";
 import { reportMeta, reportsOf, ReportTable, RangeFlag, toReview, UploadModal } from "./labs";
 import { ACCENT, liquid as apple, LiquidGlassDefs, GRAD, gradStyle, Icon, StatCard } from "./glass";
-import { AuditView, ExportButtons, InboxView, initLang, Lang, setLang, SettingsView, t, TeamView, useIdleSignOut, useInboxCount, VisitHistory } from "./extras";
+import { AuditView, ExportButtons, MfaChallenge, InboxView, initLang, Lang, setLang, SettingsView, t, TeamView, useIdleSignOut, useInboxCount, VisitHistory } from "./extras";
 import { AuraCurve, AuraPill, changePill, FrostBackground, glass, glassDark, iconBtn, pill, pillOn } from "./glass";
 
 type View = "today" | "patients" | "tests" | "add" | "inbox" | "team" | "settings" | "audit";
@@ -37,7 +37,7 @@ function Avatar({ p, size = 36 }: { p: Patient; size?: number }) {
 /** Set once live mode is ready; actions also write to clinic-api when present. */
 let LIVE: { clinicId: string; clinicName: string; me: string; role: string; timeoutMin: number } | null = null;
 
-type Mode = "loading" | "login" | "setup" | "live" | "demo";
+type Mode = "loading" | "login" | "mfa" | "setup" | "live" | "demo";
 /** The demo (fictional patients) only on localhost, or with ?demo=1 for sales calls. */
 const showDemo = () => typeof window !== "undefined" && (/^(localhost|127\.0\.0\.1)$/.test(window.location.hostname) || new URLSearchParams(window.location.search).has("demo"));
 
@@ -78,6 +78,7 @@ function LiveGate({ mode, onDemo, onCreated }: { mode: Mode; onDemo: () => void;
             <button className="mt-2 w-full rounded-full border border-white/25 py-2.5 text-[15px] text-white" onClick={() => sb().auth.signInWithOAuth({ provider: "google", options: { redirectTo } })}>{t("Continue with Google")}</button>
           </>
         ))}
+        {mode === "mfa" && <MfaChallenge onDone={onCreated} />}
         {mode === "setup" && (
           <>
             <h1 className="mt-8 text-[28px] font-light leading-tight">Set up your clinic</h1>
@@ -115,6 +116,9 @@ export default function ClinicApp() {
   const [mode, setMode] = useState<Mode>("loading");
   const loadLive = async () => {
     try {
+      // Two-factor: if this account has an authenticator, ask for the code first.
+      const { data: aal } = await sb().auth.mfa.getAuthenticatorAssuranceLevel();
+      if (aal && aal.nextLevel === "aal2" && aal.currentLevel !== "aal2") { setMode("mfa"); return; }
       const me = await api<{ memberships: { clinic_id: string; role: string; display_name: string | null; clinics: { name: string } }[] }>("me");
       if (!me.memberships.length) { setMode("setup"); return; }
       const m = me.memberships[0];
@@ -208,7 +212,7 @@ export default function ClinicApp() {
   const nav2: [View, string][] = LIVE ? [["team", t("Team")], ["settings", t("Settings")], ...(LIVE.role === "admin" ? [["audit", t("Audit log")] as [View, string]] : [])] : [];
   void lang;
 
-  if (mode === "loading" || mode === "login" || mode === "setup") return <LiveGate mode={mode} onDemo={startDemo} onCreated={loadLive} />;
+  if (mode === "loading" || mode === "login" || mode === "mfa" || mode === "setup") return <LiveGate mode={mode} onDemo={startDemo} onCreated={loadLive} />;
 
   return (
     <div className="relative isolate min-h-screen text-[#111518] antialiased">

@@ -221,6 +221,7 @@ export function SettingsView({ clinicId, toast, onLang }: { clinicId: string; to
         {!admin && <p className="text-[12px] text-white/55">Only clinic admins can change the clinic name and the sign-out time.</p>}
         <p className="text-[12px] text-white/55">Language applies to this browser. The main navigation and the new screens are translated; some detailed patient screens are still in English.</p>
       </section>
+      <TwoFactorSettings toast={toast} />
     </div>
   );
 }
@@ -362,5 +363,80 @@ export function ExportButtons({ clinicId, p, toast }: { clinicId: string | null;
       <button onClick={copy} className={btnSec}>Copy summary</button>
       <button onClick={print} className={btnSec}>{t("Export")} PDF</button>
     </div>
+  );
+}
+
+/* ───────────── TWO-FACTOR ───────────── */
+
+/** Sign-in step: 6-digit code from the authenticator app. */
+export function MfaChallenge({ onDone }: { onDone: () => void }) {
+  const [code, setCode] = useState(""), [err, setErr] = useState("");
+  const verify = async () => {
+    setErr("");
+    const { data: f } = await sb().auth.mfa.listFactors();
+    const totp = f?.totp?.[0];
+    if (!totp) { setErr("No authenticator found for this account."); return; }
+    const { error } = await sb().auth.mfa.challengeAndVerify({ factorId: totp.id, code: code.trim() });
+    if (error) setErr("That code didn't work. Check the time on your phone and try again."); else onDone();
+  };
+  return (
+    <>
+      <h1 className="mt-8 text-[28px] font-light leading-tight">Enter your code</h1>
+      <p className="mt-2 text-[14px] text-white/70">Open your authenticator app and enter the 6-digit code for Daygo Clinics.</p>
+      <input inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
+        onKeyDown={(e) => { if (e.key === "Enter" && code.length === 6) verify(); }} className={`${field} mt-5 text-center font-mono text-[22px] tracking-[.4em]`} placeholder="000000" />
+      <button disabled={code.length !== 6} onClick={verify} className={`${btnPri} mt-4 w-full justify-center`}>Continue</button>
+      {err && <p className="mt-3 text-[13px] text-[#FFB4A6]">{err}</p>}
+      <button onClick={() => sb().auth.signOut().then(() => location.reload())} className="mt-4 block text-[13px] text-white/60 underline underline-offset-2">Use a different account</button>
+    </>
+  );
+}
+
+/** Settings: set up or remove an authenticator (TOTP). */
+export function TwoFactorSettings({ toast }: { toast: (s: string) => void }) {
+  const [enrolled, setEnrolled] = useState<{ id: string } | null | undefined>(undefined);
+  const [setup, setSetup] = useState<{ id: string; qr: string; secret: string } | null>(null);
+  const [code, setCode] = useState("");
+  const load = () => sb().auth.mfa.listFactors().then(({ data }) => setEnrolled(data?.totp?.find((f) => f.status === "verified") ?? null));
+  useEffect(() => { load(); }, []);
+  const start = async () => {
+    // Clear any half-finished setup first.
+    const { data } = await sb().auth.mfa.listFactors();
+    for (const f of data?.all ?? []) if (f.status !== "verified") await sb().auth.mfa.unenroll({ factorId: f.id });
+    const { data: e, error } = await sb().auth.mfa.enroll({ factorType: "totp", friendlyName: "Daygo Clinics" });
+    if (error || !e) { toast(error?.message ?? "Couldn't start setup"); return; }
+    setSetup({ id: e.id, qr: e.totp.qr_code, secret: e.totp.secret });
+  };
+  const confirm = async () => {
+    if (!setup) return;
+    const { error } = await sb().auth.mfa.challengeAndVerify({ factorId: setup.id, code: code.trim() });
+    if (error) { toast("That code didn't work. Try the next one."); return; }
+    setSetup(null); setCode(""); load(); toast("Two-factor sign-in is on");
+  };
+  const remove = async () => {
+    if (!enrolled || !window.confirm("Turn off two-factor sign-in? Your account will be protected by email sign-in only.")) return;
+    const { error } = await sb().auth.mfa.unenroll({ factorId: enrolled.id });
+    if (error) toast(error.message); else { load(); toast("Two-factor sign-in is off"); }
+  };
+  return (
+    <section className={`${apple} mt-6 grid max-w-xl gap-3 p-6`}>
+      <h2 className={h2}>Two-factor sign-in</h2>
+      <p className="text-[14px] text-white/70">Protects patient data if someone gets into your email. Uses any authenticator app (Google Authenticator, 1Password, Authy).</p>
+      {enrolled === undefined && <p className="text-white/60">Loading…</p>}
+      {enrolled && <div className="flex items-center gap-3"><span className="rounded-full bg-[#E6E46C] px-3 py-1 text-[12px] font-semibold text-[#111518]">On</span><button onClick={remove} className={btnSec}>Turn off</button></div>}
+      {enrolled === null && !setup && <div><button onClick={start} className={btnPri}>Set up two-factor sign-in</button></div>}
+      {setup && (
+        <div className="grid gap-3">
+          <p className="text-[14px]">1. Scan this with your authenticator app.</p>
+          <img src={setup.qr} alt="Authenticator QR code" className="h-[180px] w-[180px] rounded-xl bg-white p-2" />
+          <p className="text-[12px] text-white/55">Can't scan? Enter this key: <span className="font-mono text-white/80">{setup.secret}</span></p>
+          <p className="text-[14px]">2. Enter the 6-digit code it shows.</p>
+          <div className="flex gap-2">
+            <input inputMode="numeric" maxLength={6} value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))} className={`${field} max-w-[160px] text-center font-mono tracking-[.3em]`} placeholder="000000" />
+            <button disabled={code.length !== 6} onClick={confirm} className={btnPri}>Turn on</button>
+          </div>
+        </div>
+      )}
+    </section>
   );
 }

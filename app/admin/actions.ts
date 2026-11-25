@@ -89,3 +89,49 @@ export async function updateFreeMessageConfig(_prevState: { error?: string }, fo
   revalidatePath("/admin");
   return { error: undefined };
 }
+
+/** Finds a user id by email (no filter-by-email in the admin API, so page through). */
+async function userIdForEmail(email: string): Promise<string | null> {
+  const admin = supabaseAdmin();
+  for (let page = 1; ; page++) {
+    const { data, error } = await admin.auth.admin.listUsers({ page, perPage: 200 });
+    if (error) return null;
+    const match = data.users.find((u) => u.email?.toLowerCase() === email.trim().toLowerCase());
+    if (match) return match.id;
+    if (data.users.length < 200) return null;
+  }
+}
+
+export type BroadcastState = { error?: string; result?: string };
+
+/** Sends a notification through the admin-broadcast edge function. */
+export async function sendBroadcast(_prev: BroadcastState, formData: FormData): Promise<BroadcastState> {
+  if (!(await isAuthed())) return { error: "Not authorized." };
+  const title = String(formData.get("title") ?? "").trim();
+  const body = String(formData.get("body") ?? "").trim();
+  const audience = String(formData.get("audience") ?? "test");
+  const testEmail = String(formData.get("testEmail") ?? "").trim();
+  if (!title || !body) return { error: "Add a title and a message." };
+
+  let userIds: string[] | undefined;
+  if (audience !== "everyone") {
+    if (!testEmail) return { error: "Enter the email of the account to test with." };
+    const id = await userIdForEmail(testEmail);
+    if (!id) return { error: `No account found for ${testEmail}.` };
+    userIds = [id];
+  } else if (formData.get("confirm") !== "yes") {
+    return { error: "Tick the box to confirm sending to everyone." };
+  }
+
+  const { data, error } = await supabaseAdmin().functions.invoke("admin-broadcast", {
+    body: { title, body, user_ids: userIds },
+  });
+  if (error) return { error: `Send failed: ${error.message}` };
+  const r = data as { users: number; devices: number; delivered: number; failure: string | null };
+  revalidatePath("/admin");
+  if (r.devices === 0) return { error: "Nobody in that audience has notifications on yet." };
+  if (r.delivered === 0) {
+    return { error: `Not delivered (${r.failure ?? "unknown"}). If it says 403, the Apple push key isn't set on the server yet.` };
+  }
+  return { result: `Delivered to ${r.delivered} of ${r.devices} device${r.devices === 1 ? "" : "s"} (${r.users} ${r.users === 1 ? "person" : "people"}).` };
+}

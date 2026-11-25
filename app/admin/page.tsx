@@ -2,9 +2,24 @@ import { isAuthed, logout } from "./actions";
 import { LoginForm } from "./LoginForm";
 import { ProGrants } from "./ProGrants";
 import { FreeMessageConfig } from "./FreeMessageConfig";
+import { Broadcast } from "./Broadcast";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
 export const dynamic = "force-dynamic";
+
+/** How many people/devices an "everyone" broadcast reaches, and the last sends. */
+async function loadBroadcasts() {
+  const admin = supabaseAdmin();
+  const [{ data: devices }, { data: history }] = await Promise.all([
+    admin.from("device_tokens").select("user_id").not("user_id", "is", null),
+    admin.from("admin_broadcasts").select("created_at,title,body,audience,devices,delivered,failure").order("created_at", { ascending: false }).limit(10),
+  ]);
+  const rows = (devices ?? []) as { user_id: string }[];
+  return {
+    reach: { users: new Set(rows.map((r) => r.user_id)).size, devices: rows.length },
+    history: (history ?? []) as { created_at: string; title: string; body: string; audience: string; devices: number; delivered: number; failure: string | null }[],
+  };
+}
 
 async function loadFreeMessageConfig() {
   const admin = supabaseAdmin();
@@ -122,11 +137,12 @@ export default async function AdminPage() {
     return <LoginForm />;
   }
 
-  const [users, usage, manualGrants, freeMessageConfig, subscriptionByUser] = await Promise.all([
+  const [users, usage, manualGrants, freeMessageConfig, broadcasts, subscriptionByUser] = await Promise.all([
     listAllUsers(),
     loadUsageLog(),
     loadManualGrants(),
     loadFreeMessageConfig(),
+    loadBroadcasts(),
     loadSubscriptions(),
   ]);
 
@@ -229,6 +245,27 @@ export default async function AdminPage() {
         <Stat label="Conversion rate" value={`${conversionRate.toFixed(1)}%`} />
         <Stat label="Est. AI spend (90d)" value={`$${totalCost.toFixed(2)}`} />
       </section>
+
+      <Section
+        title="Send a notification"
+        description="Announce an update or a new feature. Send a test to your own account first; it arrives like any other Daygo notification."
+      >
+        <Broadcast reach={broadcasts.reach} />
+        {broadcasts.history.length ? (
+          <div style={{ marginTop: 20 }}>
+            <div style={{ fontSize: 12, color: "#666", marginBottom: 6 }}>Sent recently</div>
+            {broadcasts.history.map((b) => (
+              <div key={b.created_at} style={{ fontSize: 13, padding: "6px 0", borderTop: "1px solid #eee" }}>
+                <b>{b.title}</b> — {b.body}
+                <div style={{ color: "#888", fontSize: 12 }}>
+                  {new Date(b.created_at).toLocaleString("en-GB")} · {b.audience === "everyone" ? "everyone" : "test"} ·{" "}
+                  {b.failure ? `not delivered (${b.failure})` : `delivered to ${b.delivered} of ${b.devices}`}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : null}
+      </Section>
 
       <Section
         title="Free chat messages (non-subscribers)"

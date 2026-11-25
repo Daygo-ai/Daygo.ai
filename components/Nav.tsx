@@ -7,16 +7,25 @@ import { APP_STORE_URL, NAV_LINKS } from "@/lib/brand";
  * (`/#pricing` rather than `#pricing`) so they still work from the legal,
  * support and labs pages, which have no such sections of their own.
  */
-export function Nav() {
+export function Nav({ light = false }: { light?: boolean }) {
   return (
-    <header className="flex items-center justify-between bg-black px-6 py-5 text-white md:px-10">
+    <header
+      className={`flex items-center justify-between px-6 py-5 md:px-10 ${light ? "bg-[#F2F1EC] text-black" : "bg-black text-white"}`}
+    >
       <Link href="/" className="flex items-center gap-2">
-        <Image src="/daygo-wordmark.webp" alt="Daygo" width={2000} height={302} priority className="h-[18px] w-auto" />
+        <Image
+          src="/daygo-wordmark.webp"
+          alt="Daygo"
+          width={2000}
+          height={302}
+          priority
+          className={`h-[18px] w-auto ${light ? "invert" : ""}`}
+        />
       </Link>
 
-      <nav className="hidden items-center gap-9 text-[13px] text-white/75 md:flex">
+      <nav className={`hidden items-center gap-9 text-[13px] md:flex ${light ? "text-black/60" : "text-white/75"}`}>
         {NAV_LINKS.map((l) => (
-          <Link key={l.href} href={l.href} className="transition hover:text-white">
+          <Link key={l.href} href={l.href} className={`transition ${light ? "hover:text-black" : "hover:text-white"}`}>
             {l.label}
           </Link>
         ))}
@@ -24,7 +33,7 @@ export function Nav() {
 
       <a
         href={APP_STORE_URL}
-        className="flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-[13px] font-semibold text-black transition hover:bg-white/90"
+        className={`flex items-center gap-2 rounded-full px-5 py-2.5 text-[13px] font-semibold transition ${light ? "bg-black text-white hover:bg-black/85" : "bg-white text-black hover:bg-white/90"}`}
       >
         <AppleMark className="h-4 w-4" />
         Download App

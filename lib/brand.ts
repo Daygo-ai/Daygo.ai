@@ -11,8 +11,8 @@ export const BONE = "#F2F1EC";
 export const INK = "#161913";
 
 export const NAV_LINKS = [
-  { href: "/#how-it-works", label: "How it works" },
   { href: "/#features", label: "Features" },
+  { href: "/clinics", label: "For clinics" },
   { href: "/#pricing", label: "Pricing" },
-  { href: "/#faq", label: "FAQ" },
+  { href: "/faq", label: "FAQ" },
 ];

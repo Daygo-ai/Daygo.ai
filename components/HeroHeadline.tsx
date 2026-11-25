@@ -2,11 +2,10 @@
 
 import Image from "next/image";
 import { motion, useReducedMotion } from "framer-motion";
-import { LIME } from "@/lib/brand";
 
 /**
  * The hero headline, staggered in on load: four lines rise in sequence and
- * the lime loop lands last, so it reads as being drawn around "CLEARER"
+ * the lime loop lands last, so it reads as being drawn around "VISITS"
  * rather than arriving with it. One deliberate moment, then the page settles.
  */
 
@@ -31,22 +30,19 @@ export function HeroHeadline() {
   });
 
   return (
-    <h1 className="text-[14vw] font-black uppercase leading-[0.82] tracking-tighter sm:text-[9vw] md:text-[5.4rem]">
+    <h1 className="text-[14vw] font-black uppercase leading-[0.84] tracking-tighter sm:text-[9vw] md:text-[5.2rem]">
       <motion.span className="block" {...line(0)}>
-        Turn{" "}
+        Your{" "}
       </motion.span>
       <motion.span className="block" {...line(1)}>
-        Your Data{" "}
+        Health,{" "}
       </motion.span>
       <motion.span className="block" {...line(2)}>
-        Into{" "}
-        <span className="relative inline-block" style={{ color: LIME }}>
-          <span className="relative z-10">A</span>
-        </span>{" "}
+        Between{" "}
       </motion.span>
 
-      <motion.span className="relative block w-fit" style={{ color: LIME }} {...line(3)}>
-        <span className="relative z-10">Clearer</span>{" "}
+      <motion.span className="relative block w-fit" {...line(3)}>
+        <span className="relative z-10">Visits</span>{" "}
         {/* Positioning lives on a plain span: motion writes its own transform,
             which would otherwise clobber the -translate centring. */}
         <span
@@ -72,9 +68,6 @@ export function HeroHeadline() {
         </span>
       </motion.span>
 
-      <motion.span className="block" {...line(4)}>
-        Today{" "}
-      </motion.span>
     </h1>
   );
 }

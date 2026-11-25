@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Nav } from "@/components/Nav";
 import { Footer } from "@/components/Footer";
 import { BONE, LIME } from "@/lib/brand";
@@ -16,25 +17,6 @@ const CONTACTS = [
   },
   { title: "Privacy", email: "privacy@daygo.ai", body: "Data export, deletion, GDPR / CCPA requests." },
   { title: "Press / partnerships", email: "hello@daygo.ai", body: "Reach out — happy to talk." },
-];
-
-const FAQS = [
-  {
-    q: "Does Daygo work without a Garmin?",
-    a: "Yes. The verdict, plan, chat, logs, lab tracking, and accountability loop all work without a wearable. Garmin sharpens the sleep / strain signals if you have one.",
-  },
-  {
-    q: "Is my data used to train AI?",
-    a: "No. We send the relevant slice of your data to Anthropic for the chat to work. They process it under their commercial terms and don't train on it. We never use it to train any model either.",
-  },
-  {
-    q: "Can I export my data?",
-    a: "Yes. Settings → Export PDF for a full health report. Email privacy@daygo.ai for a raw data export.",
-  },
-  {
-    q: "What if I have a medical question?",
-    a: "Daygo is a wellbeing tool, not a medical device. For anything urgent, contact a clinician or your local emergency number.",
-  },
 ];
 
 export default function SupportPage() {
@@ -76,20 +58,11 @@ export default function SupportPage() {
             ))}
           </div>
 
-          <div className="mt-16">
-            <div className="font-mono text-[10px] uppercase tracking-widest text-black/45">Common questions</div>
-            <dl className="mt-8 border-t border-black/10">
-              {FAQS.map((f, i) => (
-                <div
-                  key={f.q}
-                  className="grid gap-3 border-b border-black/10 py-7 md:grid-cols-[3rem_1fr_1.1fr] md:gap-8"
-                >
-                  <div className="font-mono text-[10px] tracking-widest text-black/35">0{i + 1}</div>
-                  <dt className="text-[17px] font-bold leading-snug">{f.q}</dt>
-                  <dd className="text-[14px] leading-relaxed text-black/65">{f.a}</dd>
-                </div>
-              ))}
-            </dl>
+          <div className="mt-16 border-t border-black/10 pt-8 text-[14px] text-black/65">
+            Looking for quick answers?{" "}
+            <Link href="/faq" className="font-semibold text-black" style={{ boxShadow: `inset 0 -0.5em 0 ${LIME}` }}>
+              Read the FAQ →
+            </Link>
           </div>
         </div>
       </main>

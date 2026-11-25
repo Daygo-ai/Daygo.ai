@@ -1,10 +1,15 @@
 import Image from "next/image";
+import { Bodoni_Moda } from "next/font/google";
 import { Nav } from "@/components/Nav";
 import { Footer } from "@/components/Footer";
 import { SleepChart, RunnerChart, LdlCompare, MemoryRecall } from "@/components/FeatureCharts";
 import { APP_STORE_URL, BONE, LIME } from "@/lib/brand";
-import { FanIn, FanOut } from "@/components/Diagram";
 import { HeroHeadline } from "@/components/HeroHeadline";
+import { Editorial, EditorialFeatures } from "@/components/Editorial";
+import { ClinicGlass, FounderCTA } from "@/components/GlassSections";
+import { IntroLoader } from "@/components/IntroLoader";
+import { SceneMotion } from "@/components/SceneMotion";
+import { ElasticDivider } from "@/components/Motion";
 
 // The marketing home page. Chrome (nav/footer) and brand tokens are shared
 // with the legal, support and labs pages so the site reads as one thing.
@@ -47,17 +52,18 @@ export default function HomePage() {
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(appJsonLd) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd()) }} />
-      <Nav />
+      <IntroLoader />
+      <SceneMotion />
+      <Nav light />
       <main>
-        <Hero />
-        <Features />
-        <MoreContext />
-        <HowItWorks />
-        <SmallSteps />
+        <Editorial />
+        <ClinicGlass />
+        <EditorialFeatures />
         <Pricing />
-        <Faq />
-        <FinalCTA />
+        <div style={{ background: BONE }} className="px-5 sm:px-8 md:px-12">
+          <ElasticDivider className="mx-auto max-w-[1240px]" />
+        </div>
+        <FounderCTA />
       </main>
       <Footer />
     </>
@@ -66,107 +72,52 @@ export default function HomePage() {
 
 /* ================================ HERO ================================ */
 
+const HERO_SOURCES = ["Apple Health", "Apple Watch", "Garmin", "Oura", "WHOOP", "Blood tests"];
+
 function Hero() {
   return (
-    <section className="relative overflow-hidden bg-black px-6 pb-16 pt-10 text-white md:px-10 md:pb-24">
-      <div className="relative mx-auto grid max-w-6xl items-center gap-10 md:grid-cols-[1.05fr_0.95fr]">
-        {/* left rail micro-index */}
-        <div className="pointer-events-none absolute right-full top-8 mr-8 hidden whitespace-nowrap text-right font-mono text-[9px] uppercase leading-relaxed tracking-widest text-white/35 2xl:block">
-          <div>01</div>
-          <div className="mb-3">Data</div>
-          <div>02</div>
-          <div className="mb-3">Insights</div>
-          <div>03</div>
-          <div className="mb-8">Action</div>
-          <div className="text-white/45">
-            Less noise
-            <br />
-            More progress
+    <section style={{ background: BONE }} className="px-6 pb-16 pt-10 text-black md:px-10 md:pb-24 md:pt-14">
+      <div className="mx-auto grid max-w-6xl items-center gap-12 md:grid-cols-[1.1fr_0.9fr]">
+        <div>
+          <p className="font-mono text-[10px] uppercase tracking-widest text-black/45">You · Daygo · Your clinic</p>
+          <div className="mt-6 pl-4">
+            <HeroHeadline />
           </div>
-        </div>
-        {/* right rail ticks */}
-        <div className="pointer-events-none absolute left-full top-8 ml-8 hidden whitespace-nowrap font-mono text-[9px] uppercase leading-relaxed tracking-widest text-white/25 2xl:block">
-          <div>// No ads</div>
-          <div>// No data resold</div>
-          <div>// Not a medical device</div>
-        </div>
 
-        {/* ---- copy column ---- */}
-        <div className="relative">
-          <HeroHeadline />
-
-          <p className="mt-7 max-w-sm text-[15px] leading-relaxed text-white/65">
-            Daygo reads your health data, finds what matters, and gives you personalized guidance — so you can make
-            better decisions, every day.
+          <p className="mt-8 max-w-sm text-[16px] leading-relaxed text-black/60">
+            Your watch, blood tests and how you feel in one app. With your consent, your clinic sees what changed
+            between visits.
           </p>
 
-          <div className="mt-8 flex flex-wrap items-center gap-5">
+          <div className="mt-9 flex flex-wrap items-center gap-5">
             <a
               href={APP_STORE_URL}
-              style={{ background: LIME }}
-              className="flex items-center gap-2.5 rounded-full px-7 py-3.5 text-[14px] font-semibold text-black transition hover:opacity-90"
+              className="flex items-center gap-2.5 rounded-full bg-black px-7 py-3.5 text-[14px] font-semibold text-white transition hover:bg-black/85"
             >
               <AppleMark className="h-[18px] w-[18px]" />
               Download on the App Store
             </a>
+            <a href="/clinics" className="text-[14px] font-semibold text-black/60 transition hover:text-black">
+              For clinics →
+            </a>
           </div>
 
-          <div className="mt-10 font-mono text-[10px] uppercase leading-relaxed tracking-widest text-white/40 2xl:hidden">
-            Less noise
-            <br />
-            More progress
+          <div className="mt-12 flex flex-wrap gap-x-5 gap-y-2 font-mono text-[10px] uppercase tracking-widest text-black/45">
+            {HERO_SOURCES.map((s) => (
+              <span key={s}>{s}</span>
+            ))}
           </div>
         </div>
 
-        {/* ---- phone column ---- */}
-        <div className="relative">
-          {/* data-source list with bracket + arrow, pointing at the phone */}
-          <div className="absolute -left-6 top-4 z-10 hidden lg:block">
-            <div className="border-l border-white/25 pl-3 font-mono text-[10px] uppercase leading-[1.9] tracking-widest text-white/60">
-              <div>Sleep</div>
-              <div>Training</div>
-              <div>Bloodwork</div>
-              <div>Symptoms</div>
-              <div className="text-white/35">All in one place</div>
-            </div>
-            <Image
-              src="/redesign/spiral-arrow.webp"
-              alt=""
-              width={1536}
-              height={1024}
-              sizes="14vw"
-              aria-hidden
-              className="pointer-events-none mt-6 w-28 max-w-none select-none"
-            />
-          </div>
-
-          {/* device frame playing a loop of the real Today screen */}
-          <div className="relative mx-auto w-full max-w-[310px] rounded-[3rem] bg-[#1a1a1a] p-[9px] shadow-2xl ring-1 ring-white/15">
-            <video
-              className="block aspect-[1320/2868] w-full rounded-[2.5rem] bg-black object-cover"
-              autoPlay
-              muted
-              loop
-              playsInline
-              preload="auto"
-              poster="/redesign/app-today-poster.jpg"
-              aria-label="The Daygo Today screen, showing readiness, recovery, sleep, HRV, heart rate and the latest workout"
-            >
-              <source src="/redesign/app-today-loop.webm" type="video/webm" />
-              <source src="/redesign/app-today-loop.mp4" type="video/mp4" />
-            </video>
-          </div>
-
-          {/* handwritten note + arrow, curving down toward the phone */}
-          <Image
-            src="/redesign/note-arrow.webp"
-            alt="Your data. A clearer today."
-            width={1219}
-            height={1290}
-            sizes="22vw"
-            className="pointer-events-none absolute -bottom-6 -right-28 hidden w-[13rem] max-w-none select-none lg:block"
-          />
-        </div>
+        <Image
+          src="/clinic/phone-hand.webp"
+          alt="A hand holding a phone with the Daygo app, rain in the background"
+          width={1672}
+          height={941}
+          priority
+          sizes="(min-width: 768px) 45vw, 100vw"
+          className="aspect-[4/5] w-full rounded-[2rem] object-cover object-[55%_50%]"
+        />
       </div>
     </section>
   );
@@ -247,126 +198,6 @@ function Features() {
   );
 }
 
-/* ============================ MORE CONTEXT ============================ */
-
-const SOURCES = ["Apple Health", "Bloodwork", "Symptoms", "Training", "Sleep", "Nutrition", "And more"];
-const OUTPUTS = ["AI Analysis", "Pattern recognition", "Personalized guidance"];
-
-function MoreContext() {
-  return (
-    <section className="grid md:grid-cols-2">
-      {/* ---- dark half ---- */}
-      <div className="relative flex min-h-[28rem] flex-col justify-end overflow-hidden bg-black px-6 py-12 text-white md:px-10 md:py-14">
-        {/* flipped so the lit half of the face sits right and the copy below
-            lands on the dark half */}
-        <Image
-          src="/redesign/portrait.jpg"
-          alt=""
-          fill
-          sizes="(max-width: 768px) 100vw, 45vw"
-          className="scale-x-[-1] object-cover object-[42%_center]"
-          priority={false}
-        />
-        <div
-          aria-hidden
-          className="absolute inset-0"
-          style={{ background: "linear-gradient(to top, rgba(0,0,0,0.92) 22%, rgba(0,0,0,0.45) 55%, rgba(0,0,0,0) 80%)" }}
-        />
-        <div className="relative z-10">
-          <h2 className="text-[11vw] font-black uppercase leading-[0.86] tracking-tighter sm:text-[6vw] md:text-[3.4rem]">
-            More
-            <br />
-            Context.
-            <br />
-            Better
-            <br />
-            Decisions.
-          </h2>
-          <p className="mt-6 max-w-xs text-[14px] leading-relaxed text-white/70">
-            Your data means more when it&apos;s connected. Daygo sees the bigger picture and helps you understand
-            what&apos;s actually going on.
-          </p>
-          <div className="mt-10 flex flex-wrap items-center gap-2 font-mono text-[10px] uppercase tracking-widest text-white/50">
-            <span>Data</span>
-            <TinyArrow className="h-2 w-7" />
-            <span>Context</span>
-            <TinyArrow className="h-2 w-7" />
-            <span>Insights</span>
-            <TinyArrow className="h-2 w-7" />
-            <span>Action</span>
-          </div>
-        </div>
-      </div>
-
-      {/* ---- lime half: wiring diagram ---- */}
-      <div className="relative overflow-hidden px-6 py-14 text-black md:px-10 md:py-16" style={{ background: LIME }}>
-        <div className="relative z-10 flex items-start justify-between font-mono text-[10px] uppercase tracking-widest text-black/55">
-          <span>Multi-source data</span>
-          <div className="text-right leading-relaxed">
-            <div>// Seven sources</div>
-            <div>// One timeline</div>
-            <div>// Read together</div>
-          </div>
-        </div>
-
-        <Crosshair className="absolute left-1/2 top-14 hidden h-10 w-10 -translate-x-1/2 text-black/30 md:block" />
-
-        {/* Equal 1fr side columns keep the DAYGO box on the panel's centre
-            line. Within each side the wiring is a flex-1 SVG, so it always
-            spans exactly the gap between the labels and the box — no fixed
-            widths to drift as the panel grows. */}
-        <div className="relative z-10 mt-14 grid min-h-[13rem] grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-stretch gap-2">
-          {/* sources + fan-in */}
-          <div className="flex items-stretch gap-3">
-            <div className="flex flex-col justify-between font-mono text-[9.5px] uppercase tracking-wider">
-              {SOURCES.map((s) => (
-                <div key={s} className="flex items-center gap-2.5">
-                  <span className="h-[15px] w-px bg-black/60" />
-                  <span>{s}</span>
-                </div>
-              ))}
-            </div>
-            <FanIn className="min-w-[2rem] flex-1 text-black/45" />
-          </div>
-
-          {/* hub — lime fill so the wiring terminates at the box edge */}
-          <span
-            className="self-center border border-black/70 px-5 py-2.5 text-[13px] font-black tracking-tight"
-            style={{ background: LIME }}
-          >
-            DAYGO
-          </span>
-
-          {/* fan-out + outputs, held to a narrower band than the 7 sources */}
-          <div className="flex items-center">
-            <div className="flex h-[62%] w-full items-stretch gap-3">
-              <FanOut className="min-w-[2rem] flex-1 text-black/45" />
-              <div className="flex flex-col justify-between font-mono text-[9.5px] uppercase tracking-wider">
-                {OUTPUTS.map((o) => (
-                  <div key={o}>{o}</div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* In flow rather than absolute, so it can't ride up over the content
-            above it as its height scales with the panel width. Negative
-            margin cancels the panel's bottom padding so it still bleeds off
-            the edge. */}
-        <Image
-          src="/redesign/terrain-lime.webp"
-          alt=""
-          width={1600}
-          height={533}
-          sizes="(max-width: 768px) 100vw, 55vw"
-          className="pointer-events-none relative z-0 -mb-14 mt-16 w-full select-none md:-mb-16"
-        />
-      </div>
-    </section>
-  );
-}
-
 /* ============================ TESTIMONIALS ============================ */
 
 // No testimonials until there are real ones — this slot holds a factual
@@ -416,51 +247,71 @@ function HowItWorks() {
   );
 }
 
-/* ============================= SMALL STEPS ============================= */
+/* ============================ CLINIC BRIDGE ============================ */
 
-function SmallSteps() {
+// Daygo as the connector between a patient and their clinic, in the same
+// visual language as the clinic pitch deck: a dark photo cover, then the
+// Invite -> Consent -> Follow -> Act line.
+const BRIDGE = [
+  { n: "1", title: "Invite", body: "Your clinic gives you a QR code at the visit." },
+  { n: "2", title: "Consent", body: "You choose what to share, and can stop any time." },
+  { n: "3", title: "Follow", body: "Your clinician sees trends against your own baseline." },
+  { n: "4", title: "Act", body: "Retests, plans and reminders arrive in your app. No missed calls." },
+];
+
+function ClinicBridge() {
   return (
-    <section style={{ background: BONE }} className="px-6 py-16 text-black md:px-10 md:py-20">
-      <div className="mx-auto grid max-w-6xl items-center gap-12 md:grid-cols-2">
-        <h2 className="text-[15vw] font-black uppercase leading-[0.84] tracking-tighter sm:text-[8vw] md:text-[4.8rem]">
-          <span className="block">Small</span>
-          <span className="block">Steps</span>
-          <span className="relative block w-fit">
-            <Image
-              src="/redesign/highlight.webp"
-              alt=""
-              width={1400}
-              height={468}
-              sizes="60vw"
-              aria-hidden
-              className="pointer-events-none absolute left-1/2 top-1/2 z-0 h-[310%] w-[118%] max-w-none -translate-x-1/2 -translate-y-1/2 -rotate-2 select-none"
-            />
-            <span className="relative z-10">A Brighter</span>
-          </span>
-          <span className="block">You.</span>
-        </h2>
+    <section id="clinics" style={{ background: BONE }} className="scroll-mt-6 px-6 py-16 text-black md:px-10 md:py-24">
+      <div className="mx-auto max-w-6xl">
+        <div className="grid items-center gap-10 md:grid-cols-[0.9fr_1.1fr] md:gap-14">
+          <div>
+            <p className="font-mono text-[10px] uppercase tracking-widest text-black/45">For clinics and their patients</p>
+            <h2 className="mt-5 text-[12vw] font-black uppercase leading-[0.86] tracking-tighter sm:text-[7vw] md:text-[3.6rem]">
+              You and your clinic, between visits.
+            </h2>
+            <p className="mt-6 max-w-sm text-[15px] leading-relaxed text-black/65">
+              Most people see their clinic a few times a year. Daygo is the link in between: your app on one side, your
+              clinician&apos;s view on the other, with your consent.
+            </p>
+          </div>
+          <Image
+            src="/clinic/dashboard.jpg"
+            alt="The Daygo clinic dashboard: today's appointments and what changed for each patient"
+            width={1680}
+            height={900}
+            className="w-full rounded-2xl shadow-[0_30px_80px_rgba(20,22,15,0.18)] ring-1 ring-black/10"
+          />
+        </div>
 
-        <Image
-          src="/redesign/summit-collage.webp"
-          alt="A figure standing on a summit"
-          width={1400}
-          height={933}
-          sizes="(max-width: 768px) 100vw, 50vw"
-          className="w-full"
-        />
-      </div>
+        <div className="relative mt-16 grid gap-10 sm:grid-cols-4 sm:gap-6">
+          <div className="absolute left-[12.5%] right-[12.5%] top-[22px] hidden h-px bg-black/15 sm:block" />
+          {BRIDGE.map((b, i) => {
+            const on = i === 2;
+            return (
+              <div key={b.n} className="relative flex flex-col items-start sm:items-center sm:text-center">
+                <span
+                  className="flex h-11 w-11 items-center justify-center rounded-full text-[15px] font-black"
+                  style={on ? { background: LIME, color: "#000" } : { background: BONE, border: "2px solid #000" }}
+                >
+                  {b.n}
+                </span>
+                <h3 className="mt-4 text-[18px] font-bold">{b.title}</h3>
+                <p className="mt-2 max-w-[15rem] text-[13.5px] leading-relaxed text-black/60">{b.body}</p>
+              </div>
+            );
+          })}
+        </div>
 
-      {/* centred on the section, not on either column */}
-      <div className="mt-14 flex items-start justify-center gap-4">
-        <Crosshair className="h-12 w-12 shrink-0 border border-black/25 p-2 text-black/60" />
-        <div className="font-mono text-[10px] uppercase leading-relaxed tracking-widest text-black/55">
-          54.6872° N
-          <br />
-          25.2797° E
-          <br />
-          /
-          <br />
-          A clearer you
+        <div className="mt-14 flex flex-wrap items-center gap-5 sm:justify-center">
+          <a
+            href="/clinics"
+            className="rounded-full bg-black px-7 py-3.5 text-[14px] font-semibold text-white transition hover:bg-black/85"
+          >
+            Daygo for clinics →
+          </a>
+          <a href="/clinic" className="text-[13px] text-black/55 underline-offset-4 transition hover:text-black hover:underline">
+            Clinic sign in
+          </a>
         </div>
       </div>
     </section>
@@ -469,8 +320,8 @@ function SmallSteps() {
 
 /* =============================== PRICING =============================== */
 
-// Prices mirror Daygo.storekit exactly: annual $99/yr with a 2-week free
-// trial, weekly $4.99 with none. Both tiers unlock the same features, so
+// Prices mirror Daygo.storekit exactly: annual $99/yr with a 1-week free
+// trial, weekly $2.99 with none. Both tiers unlock the same features, so
 // no feature is listed as annual-only.
 const ANNUAL_FEATURES = [
   { label: "AI coaching that remembers you", Icon: BrainIcon },
@@ -482,254 +333,156 @@ const ANNUAL_FEATURES = [
 // Deliberately facts we can stand behind rather than usage numbers or a
 // star rating — the app is new and any figure here would be invented.
 const ASSURANCES = [
-  { title: "14-day free trial", note: "No charge for 14 days", Icon: ClockIcon },
+  { title: "7-day free trial", note: "No charge for 7 days", Icon: ClockIcon },
   { title: "Cancel anytime", note: "In your App Store settings", Icon: ShieldIcon },
   { title: "Never used to train AI", note: "Your data stays yours", Icon: LockIcon },
 ];
 
-function Pricing() {
+const bodoni = Bodoni_Moda({ subsets: ["latin"], weight: ["500"], style: ["normal"] });
+const PAPER_ACCENT = "#7A8F1F"; // darker lime, readable on bone
+
+function PlanCheck({ children }: { children: React.ReactNode }) {
   return (
-    <section id="pricing" className="relative overflow-hidden bg-black px-6 py-20 text-white md:px-10 md:py-24">
-      {/* Runner sits along the bottom edge and is faded into black upward, so
-          it reads as the floor of the section without touching card contrast. */}
-      <Image
-        src="/redesign/runner-summit.jpg"
-        alt=""
-        width={1672}
-        height={941}
-        sizes="100vw"
-        aria-hidden
-        className="pointer-events-none absolute inset-x-0 bottom-0 z-0 h-[65%] w-full select-none object-cover object-bottom"
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 z-0"
-        style={{
-          // Heavy at the very bottom so the assurance bar and fine print stay
-          // legible, lighter through the middle where the runner should read.
-          background:
-            "linear-gradient(to top, rgba(0,0,0,0.94) 0%, rgba(0,0,0,0.86) 14%, rgba(0,0,0,0.52) 30%, rgba(0,0,0,0.88) 58%, #000 78%)",
-        }}
-      />
-
-      <div className="relative z-10 mx-auto max-w-6xl">
-        <div className="grid gap-14 lg:grid-cols-[0.85fr_1.15fr] lg:items-start">
-          {/* ---- left: pitch ---- */}
-          <div>
-            <p className="font-mono text-[10px] uppercase tracking-widest text-white/45">Pricing</p>
-
-            <h2 className="mt-7 text-[12vw] font-black uppercase leading-[0.85] tracking-tighter sm:text-[7vw] lg:text-[3.6rem]">
-              <span className="block">Start free.</span>
-              <span className="block">Decide in</span>
-              <span className="relative block w-fit" style={{ color: LIME }}>
-                <span className="relative z-10">two weeks.</span>
-                <Underline className="absolute -bottom-2 left-0 h-3 w-full" />
-              </span>
-            </h2>
-
-            <p className="mt-7 max-w-sm text-[15px] leading-relaxed text-white/65">
-              Get full access for 14 days. See what your data actually says, build the habit, and decide after —
-              not before.
-            </p>
-
-            <div className="mt-10 flex items-start gap-3 border-l border-white/15 pl-4">
-              <p className="max-w-[15rem] font-mono text-[10px] uppercase leading-relaxed tracking-widest text-white/45">
-                Independent, built in Lithuania. No ads, no data resold.
-              </p>
-            </div>
-
-            {/* sits in the bottom-left corner, over the runner */}
-            <Image
-              src="/redesign/better-data-note.webp"
-              alt="Better data. Brighter days."
-              width={800}
-              height={533}
-              sizes="30vw"
-              className="pointer-events-none mt-14 hidden w-56 max-w-none select-none lg:block"
-            />
-          </div>
-
-          {/* ---- right: plans ---- */}
-          <div>
-            <div className="grid gap-5 sm:grid-cols-2">
-              {/* annual */}
-              <div
-                className="flex flex-col rounded-2xl border p-7"
-                style={{ borderColor: LIME, background: "rgba(205,238,60,0.04)" }}
-              >
-                <div className="flex items-center justify-between">
-                  <span
-                    className="rounded-full px-3 py-1 font-mono text-[9px] font-bold uppercase tracking-widest text-black"
-                    style={{ background: LIME }}
-                  >
-                    Most popular
-                  </span>
-                  <span className="font-mono text-[10px] uppercase tracking-widest text-white/70">Annual</span>
-                </div>
-
-                <div className="mt-7 flex items-baseline gap-2">
-                  <span className="text-5xl font-black tracking-tighter">$99</span>
-                  <span className="text-[15px] text-white/55">/ year</span>
-                </div>
-                <p className="mt-2 text-[13.5px] text-white/70">14-day free trial, then $99/year.</p>
-
-                <ul className="mt-7 space-y-3.5 border-t border-white/10 pt-7">
-                  {ANNUAL_FEATURES.map((f) => (
-                    <li key={f.label} className="flex items-start gap-3 text-[13.5px] leading-snug text-white/85">
-                      <f.Icon className="mt-px h-4 w-4 shrink-0" style={{ color: LIME }} />
-                      <span>{f.label}</span>
-                    </li>
-                  ))}
-                </ul>
-
-                {/* pt- gives a guaranteed gap above the CTA; mt-auto alone
-                    collapses it once the feature list grows tall */}
-                <div className="mt-auto pt-9">
-                  <a
-                    href={APP_STORE_URL}
-                    style={{ background: LIME }}
-                    className="flex items-center justify-center gap-2.5 rounded-full px-6 py-3.5 text-[14px] font-semibold text-black transition hover:opacity-90"
-                  >
-                    <AppleMark className="h-[18px] w-[18px]" />
-                    Start 14-day free trial
-                  </a>
-                  <p className="mt-3 text-center text-[11.5px] text-white/45">Renews annually. Cancel anytime.</p>
-                </div>
-              </div>
-
-              {/* weekly */}
-              <div className="flex flex-col rounded-2xl border border-white/15 p-7">
-                <span className="font-mono text-[10px] uppercase tracking-widest text-white/70">Weekly</span>
-
-                <div className="mt-7 flex items-baseline gap-2">
-                  <span className="text-5xl font-black tracking-tighter">$4.99</span>
-                  <span className="text-[15px] text-white/55">/ week</span>
-                </div>
-                <p className="mt-2 text-[13.5px] text-white/70">Same features, billed weekly. No trial.</p>
-
-                <ul className="mt-7 space-y-3.5 border-t border-white/10 pt-7">
-                  {["Everything in Annual", "Cancel any week"].map((f) => (
-                    <li key={f} className="flex items-start gap-3 text-[13.5px] leading-snug text-white/85">
-                      <CheckIcon className="mt-px h-4 w-4 shrink-0 text-white/60" />
-                      <span>{f}</span>
-                    </li>
-                  ))}
-                </ul>
-
-                <div className="mt-auto pt-9">
-                  <a
-                    href={APP_STORE_URL}
-                    className="flex items-center justify-center gap-2.5 rounded-full border border-white/25 px-6 py-3.5 text-[14px] font-semibold text-white transition hover:bg-white/10"
-                  >
-                    <AppleMark className="h-[18px] w-[18px]" />
-                    Get started
-                  </a>
-                  <p className="mt-3 text-center text-[11.5px] text-white/45">Billed weekly. Cancel anytime.</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* ---- assurance bar ---- */}
-        <div className="mt-16 grid gap-6 border-t border-white/10 pt-8 sm:grid-cols-3">
-          {ASSURANCES.map((a, i) => (
-            <div
-              key={a.title}
-              // outer two hug the edges, middle one centres — so the middle
-              // item sits on the section's centre line, not a third of the way in
-              className={`flex items-center gap-3 ${
-                i === 1 ? "sm:justify-center" : i === 2 ? "sm:justify-end" : ""
-              }`}
-            >
-              <a.Icon className="h-5 w-5 shrink-0" style={{ color: LIME }} />
-              <div>
-                <div className="text-[13.5px] font-bold">{a.title}</div>
-                <div className="font-mono text-[9.5px] uppercase tracking-widest text-white/45">{a.note}</div>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <p className="mt-8 text-[12px] leading-relaxed text-white/45">
-          Subscriptions are billed through the App Store and can be cancelled any time in your iPhone&apos;s
-          subscription settings. Daygo is a wellbeing tool, not a medical device, and nothing in it is medical advice.
-        </p>
-      </div>
-    </section>
+    <li className="flex items-start gap-3 text-[15px] leading-snug text-black/75">
+      <svg viewBox="0 0 16 16" className="mt-[3px] h-4 w-4 shrink-0" aria-hidden>
+        <path d="M3 8.4l3 3 7-7" fill="none" stroke={PAPER_ACCENT} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+      <span>{children}</span>
+    </li>
   );
 }
 
-/* ================================= FAQ ================================= */
+/** A plan card: serif name with a small label, big serif price, the deal in one line,
+ *  a short list and one clear button. */
+function PlanCard({
+  name,
+  note,
+  price,
+  per,
+  deal,
+  items,
+  href,
+  cta,
+  primary = false,
+  footnote,
+}: {
+  name: string;
+  note: string;
+  price: React.ReactNode;
+  per: string;
+  deal: string;
+  items: string[];
+  href: string;
+  cta: string;
+  primary?: boolean;
+  footnote: string;
+}) {
+  return (
+    <div
+      className={`flex flex-col rounded-[40px] border p-8 md:p-10 ${primary ? "border-black/25 bg-white/70 shadow-[0_20px_50px_rgba(20,20,18,0.07)]" : "border-black/10 bg-white/35"}`}
+    >
+      <div className="flex items-baseline justify-between gap-4">
+        <h3 className={`${bodoni.className} text-[32px] uppercase leading-none`}>{name}</h3>
+        <span className="whitespace-nowrap text-[10.5px] font-semibold uppercase tracking-[.2em]" style={{ color: PAPER_ACCENT }}>
+          {note}
+        </span>
+      </div>
 
-const FAQS = [
-  {
-    q: "What is Daygo?",
-    a: "Daygo is an AI health coach for iPhone. It reads your sleep, heart-rate variability, resting heart rate, workouts, food logs and blood test results, remembers what you tell it, and turns all of that into a plain-English read on what today needs.",
-  },
-  {
-    q: "Does Daygo work with Apple Watch and Garmin?",
-    a: "Yes. Daygo reads whatever your Apple Watch, Garmin or other wearable writes to Apple Health: sleep stages, heart-rate variability, resting heart rate and workouts.",
-  },
-  {
-    q: "How is Daygo different from Whoop or Bevel?",
-    a: "Daygo needs no extra hardware or band subscription: it works with the watch you already have. Instead of only showing scores, it's a coach you can talk to that remembers your goals and past conversations, and it reads your blood test results alongside your sleep and training.",
-  },
-  {
-    q: "What do I need to start?",
-    a: "An iPhone. Connecting Apple Health makes Daygo far more useful, but you can type things in by hand and still get a plan.",
-  },
-  {
-    q: "Can I try it before paying?",
-    a: "Yes. The annual plan starts with a 14-day free trial, and you can send a few chat messages before subscribing at all.",
-  },
-  {
-    q: "What happens to my bloodwork?",
-    a: "You photograph a results page and Daygo reads the markers from it, so you get plain-English context instead of a number with no meaning attached.",
-  },
-  {
-    q: "Is this medical advice?",
-    a: "No. Daygo is a wellbeing tool, not a medical device. It can help you spot patterns and ask better questions, but it does not diagnose anything — talk to a clinician about anything that concerns you.",
-  },
-  {
-    q: "How do I cancel?",
-    a: "In your iPhone's subscription settings, the same place as every other App Store subscription. Cancelling there stops the renewal immediately.",
-  },
-];
+      <p className="mt-8 leading-none">
+        {price}
+        <span className="ml-2 text-[17px] text-black/55">{per}</span>
+      </p>
+      <p className="mt-3 text-[14.5px] text-black/60">{deal}</p>
 
-/** The FAQ below as FAQPage schema, which search and AI answers quote directly. */
-function faqJsonLd() {
-  return {
-    "@context": "https://schema.org",
-    "@type": "FAQPage",
-    mainEntity: FAQS.map((f) => ({ "@type": "Question", name: f.q, acceptedAnswer: { "@type": "Answer", text: f.a } })),
-  };
+      <ul className="mt-8 space-y-3.5 border-t border-black/10 pt-8">
+        {items.map((x) => (
+          <PlanCheck key={x}>{x}</PlanCheck>
+        ))}
+      </ul>
+
+      <div className="mt-auto pt-10">
+        <a
+          href={href}
+          className={`flex items-center justify-center gap-2 rounded-full px-6 py-4 text-[15px] font-semibold transition-colors duration-300 ${
+            primary ? "bg-black text-white hover:bg-[#CDEE3C] hover:text-black" : "border border-black/25 hover:border-black hover:bg-black hover:text-white"
+          }`}
+        >
+          {cta}
+          <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+            <path d="M5 12h14M13 6l6 6-6 6" />
+          </svg>
+        </a>
+        <p className="mt-4 text-center text-[13px] text-black/50">{footnote}</p>
+      </div>
+    </div>
+  );
 }
 
-function Faq() {
+function Pricing() {
   return (
-    <section id="faq" style={{ background: BONE }} className="px-6 py-20 text-black md:px-10 md:py-24">
-      <div className="mx-auto max-w-6xl">
-        <div className="flex items-center justify-between font-mono text-[10px] uppercase tracking-widest text-black/45">
-          <span>FAQ</span>
-          <span>01 — 0{FAQS.length}</span>
+    <section id="pricing" style={{ background: BONE }} className="px-5 py-24 text-black sm:px-8 md:px-10 md:py-32">
+      <div className="mx-auto max-w-5xl">
+        <div className="text-center">
+          <p className="text-[10.5px] font-semibold uppercase tracking-[.2em]" style={{ color: PAPER_ACCENT }}>
+            Pricing
+          </p>
+          <h2 className={`${bodoni.className} mt-6 text-[11vw] uppercase leading-[.95] md:text-[clamp(40px,4.6vw,72px)]`}>
+            Start free.
+            <br />
+            Decide in a week.
+          </h2>
+          <p className="mx-auto mt-6 max-w-md text-[15px] leading-relaxed text-black/60">
+            Full access for 7 days. See what your data actually says, then decide.
+          </p>
         </div>
 
-        <h2 className="mt-8 text-[12vw] font-black uppercase leading-[0.85] tracking-tighter sm:text-[7vw] md:text-[3.7rem]">
-          Questions,
-          <br />
-          answered straight.
-        </h2>
-
-        <div className="mt-14 border-t border-black/10">
-          {FAQS.map((f, i) => (
-            <div key={f.q} className="grid gap-3 border-b border-black/10 py-7 md:grid-cols-[3rem_1fr_1.1fr] md:gap-8">
-              <div className="font-mono text-[10px] tracking-widest text-black/35">0{i + 1}</div>
-              <h3 className="text-[17px] font-bold leading-snug">{f.q}</h3>
-              <p className="text-[14px] leading-relaxed text-black/65">{f.a}</p>
-            </div>
-          ))}
+        <div className="mt-14 grid gap-5 md:grid-cols-2">
+          <PlanCard
+            primary
+            name="Personal"
+            note="For you"
+            price={<span className={`${bodoni.className} text-[64px]`}>$2.99</span>}
+            per="/ week"
+            deal="or $99 a year, 7 days free (save 36%)"
+            items={[
+              "AI coach that remembers you",
+              "Daily plan from sleep, training and labs",
+              "Lab markers read from a photo",
+              "Apple Health, Garmin, Oura and WHOOP",
+              "Share with your clinic, only if you choose to",
+            ]}
+            href={APP_STORE_URL}
+            cta="Start 7-day free trial"
+            footnote="Billed through the App Store · Cancel anytime"
+          />
+          <PlanCard
+            name="Clinic"
+            note="For clinics"
+            price={
+              <>
+                <span className="mr-2 text-[17px] text-black/55">from</span>
+                <span className={`${bodoni.className} text-[64px]`}>€250</span>
+              </>
+            }
+            per="/ month"
+            deal="Start with a 60-day pilot."
+            items={[
+              "Clinician dashboard with trends against each patient's baseline",
+              "A ready summary of what changed since the last visit",
+              "Retests and plans sent straight to the patient's app",
+              "GDPR-ready with a clinic DPA, audit log and two-factor sign-in",
+            ]}
+            href="/clinics"
+            cta="See Daygo for clinics"
+            footnote="Or book a 15-min call: hello@daygo.ai"
+          />
         </div>
+
+        <p className="mx-auto mt-10 max-w-2xl text-center text-[12px] leading-relaxed text-black/45">
+          Personal plans are billed through the App Store and can be cancelled any time in your iPhone&apos;s
+          subscription settings. Your data is never used to train AI. Daygo is a wellbeing tool, not a medical device,
+          and nothing in it is medical advice.
+        </p>
       </div>
     </section>
   );
@@ -755,6 +508,13 @@ function FinalCTA() {
           <AppleMark className="h-[18px] w-[18px]" />
           Download on the App Store
           <LongArrow className="h-3 w-7" />
+        </a>
+
+        <a
+          href="mailto:hello@daygo.ai?subject=Daygo%20for%20clinics"
+          className="text-[14px] font-semibold text-white/75 transition hover:text-white"
+        >
+          Run a clinic? Book a demo →
         </a>
 
         <div className="flex h-28 w-28 shrink-0 items-center justify-center rounded-full border border-white/25 text-center font-mono text-[10px] uppercase leading-relaxed tracking-widest text-white/70">
@@ -790,27 +550,6 @@ function LongArrow({ className }: { className?: string }) {
   );
 }
 
-function TinyArrow({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 30 8" fill="none" stroke="currentColor" strokeWidth="1" className={className} preserveAspectRatio="none" aria-hidden>
-      <path d="M0 4h26M22 1l4 3-4 3" />
-    </svg>
-  );
-}
-
-function Crosshair({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 40 40" fill="none" stroke="currentColor" strokeWidth="1" className={className} aria-hidden>
-      <circle cx="20" cy="20" r="9" />
-      <path d="M20 0v40M0 20h40" />
-    </svg>
-  );
-}
-
-// The two fans are separate SVGs, each stretched across the gap its own
-// flex slot measures out. Endpoints sit where the labels actually are:
-// 7 sources spread over the full height, 3 outputs over a narrower band,
-// both distributed by `justify-between` to match these y values.
 function MoonIcon({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden>

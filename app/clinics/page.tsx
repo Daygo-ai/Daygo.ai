@@ -6,7 +6,7 @@ import { Nav } from "@/components/Nav";
 import { Footer } from "@/components/Footer";
 import { ClinicMotion } from "@/components/ClinicMotion";
 import { SceneMotion } from "@/components/SceneMotion";
-import { BONE, LIME } from "@/lib/brand";
+import { BONE, BOOK_CALL_URL, LIME } from "@/lib/brand";
 
 // Daygo for clinics. Same editorial language as the home page: serif
 // headlines, small olive labels, hairlines and bone. Everything here should
@@ -23,7 +23,8 @@ export const metadata: Metadata = {
   alternates: { canonical: "https://daygo.ai/clinics" },
 };
 
-const DEMO = "mailto:hello@daygo.ai?subject=Daygo%20for%20clinics%20demo";
+const DEMO = BOOK_CALL_URL;
+const EXT = { target: "_blank", rel: "noopener noreferrer" } as const;
 
 const PROBLEMS = [
   ["Follow-ups run on phone calls", "Patients stop picking up. Retests slip, and the next visit starts from zero."],
@@ -133,7 +134,7 @@ export default function ClinicsPage() {
                 not to a missed call.
               </p>
               <div className="rv mt-10 flex flex-wrap items-center gap-6">
-                <a href={DEMO} className="rounded-full bg-black px-7 py-3.5 text-[14px] font-semibold text-white transition hover:opacity-85">
+                <a href={DEMO} {...EXT} className="rounded-full bg-black px-7 py-3.5 text-[14px] font-semibold text-white transition hover:opacity-85">
                   Book a demo
                 </a>
                 <a href="/clinic" className="text-[13px] font-medium uppercase tracking-[.16em] text-black/60 transition hover:text-black">
@@ -314,7 +315,7 @@ export default function ClinicsPage() {
                 </p>
               </div>
               <div className="mt-auto pt-10">
-                <a href={DEMO} className="group inline-flex items-center gap-4 text-[15px] font-semibold">
+                <a href={DEMO} {...EXT} className="group inline-flex items-center gap-4 text-[15px] font-semibold">
                   <span className="flex h-14 w-14 items-center justify-center rounded-full bg-black text-white transition-colors duration-300 group-hover:bg-[#CDEE3C] group-hover:text-black">
                     <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                       <path d="M5 12h14M13 6l6 6-6 6" />
@@ -340,8 +341,8 @@ export default function ClinicsPage() {
                 </p>
               </div>
             </div>
-            <a href={DEMO} className="shrink-0 self-start rounded-full bg-black px-7 py-3.5 text-[14px] font-semibold text-white transition hover:opacity-85 md:self-auto">
-              Book a 15-min call
+            <a href={DEMO} {...EXT} className="shrink-0 self-start rounded-full bg-black px-7 py-3.5 text-[14px] font-semibold text-white transition hover:opacity-85 md:self-auto">
+              Book a 30-min call
             </a>
           </div>
         </section>

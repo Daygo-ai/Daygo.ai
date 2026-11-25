@@ -3,7 +3,7 @@ import { Bodoni_Moda } from "next/font/google";
 import { Nav } from "@/components/Nav";
 import { Footer } from "@/components/Footer";
 import { SleepChart, RunnerChart, LdlCompare, MemoryRecall } from "@/components/FeatureCharts";
-import { APP_STORE_URL, BONE, LIME } from "@/lib/brand";
+import { APP_STORE_URL, BONE, BOOK_CALL_URL, LIME } from "@/lib/brand";
 import { HeroHeadline } from "@/components/HeroHeadline";
 import { Editorial, EditorialFeatures } from "@/components/Editorial";
 import { ClinicGlass, FounderCTA } from "@/components/GlassSections";
@@ -375,7 +375,7 @@ function PlanCard({
   href: string;
   cta: string;
   primary?: boolean;
-  footnote: string;
+  footnote: React.ReactNode;
 }) {
   return (
     <div
@@ -474,7 +474,15 @@ function Pricing() {
             ]}
             href="/clinics"
             cta="See Daygo for clinics"
-            footnote="Or book a 15-min call: hello@daygo.ai"
+            footnote={
+              <>
+                Or{" "}
+                <a href={BOOK_CALL_URL} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 hover:text-black">
+                  book a 30-min call
+                </a>{" "}
+                with the founder
+              </>
+            }
           />
         </div>
 
@@ -511,7 +519,9 @@ function FinalCTA() {
         </a>
 
         <a
-          href="mailto:hello@daygo.ai?subject=Daygo%20for%20clinics"
+          href={BOOK_CALL_URL}
+          target="_blank"
+          rel="noopener noreferrer"
           className="text-[14px] font-semibold text-white/75 transition hover:text-white"
         >
           Run a clinic? Book a demo →

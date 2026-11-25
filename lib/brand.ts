@@ -1,6 +1,9 @@
 // Shared brand constants for the editorial design. Kept in one place so the
 // nav, footer and page bodies can't drift apart.
 
+/** 30-minute intro call with the founder, for clinics. */
+export const BOOK_CALL_URL = "https://calendly.com/marijus-dovydaitis-daygo/30min";
+
 export const APP_STORE_URL = "https://apps.apple.com/us/app/daygo-ai/id6773255641";
 
 /** Signature lime. */

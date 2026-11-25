@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { APP_STORE_URL } from "@/lib/brand";
+import { APP_STORE_URL, BOOK_CALL_URL } from "@/lib/brand";
 import { Bodoni_Moda } from "next/font/google";
 import { RotatingWords } from "@/components/Motion";
 
@@ -19,7 +19,7 @@ function ChevronRight({ size = 14, className }: { size?: number; className?: str
     </svg>
   );
 }
-const DEMO = "mailto:hello@daygo.ai?subject=Daygo%2015-min%20call";
+const DEMO = BOOK_CALL_URL;
 
 function useReveal() {
   const ref = useRef<HTMLElement>(null);
@@ -340,8 +340,8 @@ export function FounderCTA() {
           <div className="flex flex-col gap-1.5 pr-2">
             <p className="text-sm font-medium">Run a clinic? Talk with Marijus</p>
             <p className="text-[10px] uppercase tracking-[0.15em] text-black/55">Founder of Daygo</p>
-            <a href={DEMO} className="mt-1.5 flex w-fit items-center gap-1 rounded-full px-4 py-2 text-xs font-medium text-white hover:opacity-85" style={{ background: INK }}>
-              Book a 15-min call <ChevronRight size={14} />
+            <a href={DEMO} target="_blank" rel="noopener noreferrer" className="mt-1.5 flex w-fit items-center gap-1 rounded-full px-4 py-2 text-xs font-medium text-white hover:opacity-85" style={{ background: INK }}>
+              Book a 30-min call <ChevronRight size={14} />
             </a>
           </div>
         </div>

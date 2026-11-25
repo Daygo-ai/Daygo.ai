@@ -1,6 +1,6 @@
 # Daygo — Privacy Policy
 
-_Last updated: 2026-10-30_
+_Last updated: 2026-11-25_
 _Operator: Marijus Dovydaitis ("we", "our")_
 
 ## 1. What this policy covers
@@ -35,9 +35,10 @@ Daygo is a personal wellbeing app. This policy explains what personal data Daygo
 - A vendor-scoped device identifier (`identifierForVendor`) used for rate limiting.
 - Device type, OS version, and app version sent to crash-reporting (Sentry).
 - A push notification token, if you grant notification permission.
+- App usage events, if you're signed in: which parts of the app you use and when (for example: opened the app, opened Chat, tapped a suggested question, set a reminder, opened a notification), with the app version. Never health values, and never what you write or say.
 
 ### 2.6 What we don't collect
-- No advertising identifiers. No third-party trackers. No analytics SDKs that build a behavioral profile of you. No location beyond your timezone.
+- No advertising identifiers. No third-party trackers. No analytics SDKs that build a behavioral profile of you (the app usage events above stay in our own database and are only used to improve Daygo). No location beyond your timezone.
 
 ## 3. How we use your data
 
@@ -45,6 +46,7 @@ Daygo is a personal wellbeing app. This policy explains what personal data Daygo
 - **Generate AI coaching.** We send the relevant subset of your data to Anthropic's Claude API. Anthropic processes it under their commercial terms and does not use it to train their models.
 - **Send you push notifications.** Only when you've enabled them.
 - **Diagnose crashes and bugs** via Sentry.
+- **Improve the app.** App usage events show which features people use and keep coming back to. This is based on our legitimate interest in building a useful product (GDPR Art. 6(1)(f)); you can object any time by emailing privacy@daygo.ai.
 
 We do not sell your data. We do not share it with advertisers. We never use your data, including Garmin and Apple Health data, to train or improve AI models.
 
@@ -82,6 +84,7 @@ Each processes your data only to provide its service to Daygo.
 - Account data: kept until you delete your account, then erased within 30 days.
 - Garmin data: kept while Garmin is connected; deleted when you disconnect Garmin or delete your account.
 - Crash logs: 90 days.
+- App usage events: 12 months, then deleted.
 - API request/response logs (rate limiting): 30 days.
 
 ## 6. Your rights

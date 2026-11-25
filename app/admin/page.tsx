@@ -3,6 +3,7 @@ import { LoginForm } from "./LoginForm";
 import { ProGrants } from "./ProGrants";
 import { FreeMessageConfig } from "./FreeMessageConfig";
 import { Broadcast } from "./Broadcast";
+import { loadRetention } from "./retention";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
 export const dynamic = "force-dynamic";
@@ -202,6 +203,8 @@ export default async function AdminPage() {
   // signal: they crossed from free to paying at least once. This is
   // exactly the number the free-message experiment is meant to move.
   const everSubscribedCount = users.filter((u) => subscriptionByUser.has(u.id)).length;
+  const retention = await loadRetention(users, new Set(users.filter((u) => subscriptionByUser.has(u.id)).map((u) => u.id)));
+  const rate = (r: { pct: number; back: number; of: number } | null) => (r ? `${r.pct}% (${r.back}/${r.of})` : "not enough data");
   const conversionRate = users.length > 0 ? (everSubscribedCount / users.length) * 100 : 0;
 
   const grantRows = manualGrants.map((g) => ({
@@ -245,6 +248,38 @@ export default async function AdminPage() {
         <Stat label="Conversion rate" value={`${conversionRate.toFixed(1)}%`} />
         <Stat label="Est. AI spend (90d)" value={`$${totalCost.toFixed(2)}`} />
       </section>
+
+      <Section
+        title="Retention"
+        description={
+          `From the app's own activity events${retention.since ? `, tracked since ${new Date(retention.since).toLocaleDateString("en-GB")}` : " — none yet; they start arriving once people open the updated app"}. ` +
+          "Active means the person opened the app or did something in it. Return rates count people who were back in that window after signing up."
+        }
+      >
+        <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
+          <Stat label="Active today" value={retention.dau} />
+          <Stat label="Active 7 days" value={retention.wau} />
+          <Stat label="Active 30 days" value={retention.mau} />
+          <Stat label="Stickiness (DAU/MAU)" value={`${retention.stickiness}%`} />
+        </div>
+        <Table
+          columns={["Came back", "Rate"]}
+          rows={[
+            ["Next day (day 1)", rate(retention.d1)],
+            ["Second week (days 7–13)", rate(retention.d7)],
+            ["After a month (days 30–36)", rate(retention.d30)],
+          ]}
+        />
+        <div style={{ fontSize: 12, color: "#666", marginTop: 18 }}>Weekly cohorts: share of each sign-up week active in week 0, 1, 2, 3</div>
+        <Table columns={["Signed up week of", "People", "Week 0", "Week 1", "Week 2", "Week 3"]} rows={retention.cohortRows} />
+        <div style={{ fontSize: 12, color: "#666", marginTop: 18 }}>Funnel</div>
+        <Table
+          columns={["Step", "People", "Of signed up"]}
+          rows={retention.funnel.map(([k, n]) => [k, n, `${retention.funnel[0][1] ? Math.round((n / retention.funnel[0][1]) * 100) : 0}%`])}
+        />
+        <div style={{ fontSize: 12, color: "#666", marginTop: 18 }}>What people use (last 30 days)</div>
+        <Table columns={["Action", "People", "Times"]} rows={retention.usageRows.length ? retention.usageRows : [["No events yet", 0, 0]]} />
+      </Section>
 
       <Section
         title="Send a notification"

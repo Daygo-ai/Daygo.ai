@@ -189,7 +189,7 @@ function ClinicMockup({ lang }: { lang: Lang }) {
   return (
     <div ref={track} className="relative mt-10" style={{ height: "680svh" }}>
       <div className="sticky top-0 flex h-[100svh] items-center overflow-hidden">
-        <div ref={box} className="relative mx-auto w-full max-w-[1180px]">
+        <div ref={box} className="gs-box relative mx-auto w-full max-w-[1180px]">
           {/* The soft edges are painted on top in the page colour instead of a CSS
               mask on the <video>: iPhone Safari renders a masked video blank. */}
           <div className="gs-lap relative">
@@ -461,7 +461,10 @@ function Styles() {
       .gs-in > .gs-clin { opacity: 1; transform: translate(-50%, 0); }
       .gs-title .gs-l { display: inline-block; opacity: 0; transform: translateY(.5em) rotate(3deg); filter: blur(6px); transition: opacity .7s, transform .9s cubic-bezier(.2,.7,.2,1), filter .7s; transition-delay: calc(var(--k) * 28ms); }
       .gs-title.gs-show .gs-l { opacity: 1; transform: none; filter: none; }
-      .gs-lap { transform-origin: 50% 35%; transition: transform 1.2s cubic-bezier(.2,.7,.2,1); }
+      .gs-lap { transform-origin: 50% 35%; transition: transform 1.2s cubic-bezier(.2,.7,.2,1); will-change: transform; }
+      /* GPU layer for the blur, so it stays smooth on desktop. Not on touch
+         devices: iPhone Safari draws the <video> blank inside a will-change: filter box. */
+      @media (hover: hover) and (pointer: fine) { .gs-box { will-change: filter; } }
       .gs-in > .gs-lap { transform: scale(.72) translateY(-6%); }
       @media (prefers-reduced-motion: reduce) { .gs-r { opacity: 1; transform: none; transition: none; } }
     `}</style>

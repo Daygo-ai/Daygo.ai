@@ -149,7 +149,8 @@ function ClinicMockup({ lang }: { lang: Lang }) {
       }
       const inn = k > 0.5;
       if (inn !== last.inn) { box.current?.classList.toggle("gs-in", inn); last.inn = inn; }
-      const m = Math.max(0, Math.min(1, (k - 0.66) / 0.34));
+      // hold the laptop + clinician view a while before melting into the title
+      const m = Math.max(0, Math.min(1, (k - 0.8) / 0.2));
       const melt = Math.round(m * m * (3 - 2 * m) * 100) / 100;
       if (melt !== last.melt) {
         last.melt = melt;
@@ -171,7 +172,7 @@ function ClinicMockup({ lang }: { lang: Lang }) {
     };
   }, []);
   return (
-    <div ref={track} className="relative mt-10" style={{ height: "580svh" }}>
+    <div ref={track} className="relative mt-10" style={{ height: "680svh" }}>
       <div className="sticky top-0 flex h-[100svh] items-center overflow-hidden">
         <div ref={box} className="relative mx-auto w-full max-w-[1180px]" style={{ willChange: "filter" }}>
           <video

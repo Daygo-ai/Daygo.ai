@@ -4,36 +4,72 @@ import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
+import { createHash, createHmac, timingSafeEqual } from "node:crypto";
+import { headers } from "next/headers";
+
 const COOKIE_NAME = "daygo_admin";
+const SESSION_SECONDS = 60 * 60 * 12;
+
+// Security review H8: the cookie used to BE the admin password. Now it holds
+// "<expiry>.<hmac>", signed with a key derived from ADMIN_PASSWORD, so a
+// stolen cookie expires, never reveals the password, and changing the
+// password (or ADMIN_SESSION_VERSION) logs every session out.
+function sessionKey(): Buffer | null {
+  const pw = process.env.ADMIN_PASSWORD;
+  if (!pw) return null;
+  return createHash("sha256").update(`daygo-admin-session:${process.env.ADMIN_SESSION_VERSION ?? "1"}:${pw}`).digest();
+}
+function sign(exp: number, key: Buffer) {
+  return createHmac("sha256", key).update(String(exp)).digest("base64url");
+}
+function safeEqual(a: string, b: string) {
+  const x = Buffer.from(a), y = Buffer.from(b);
+  return x.length === y.length && timingSafeEqual(x, y);
+}
+
+/** Login attempts per IP, counted in the database (shared across instances). */
+async function loginAllowed(): Promise<boolean> {
+  const h = await headers();
+  const ip = (h.get("x-forwarded-for") ?? "").split(",")[0].trim() || "unknown";
+  const { data, error } = await supabaseAdmin().rpc("rate_limit_increment", { p_key: `admin-login:${ip}`, p_window_seconds: 15 * 60 });
+  if (error) return true; // counter down: fall back to the password check alone
+  return (data as number) <= 8;
+}
 
 export async function login(_prevState: { error?: string }, formData: FormData) {
+  if (!(await loginAllowed())) return { error: "Too many attempts. Try again in 15 minutes." };
   const password = formData.get("password");
-  if (typeof password !== "string" || password.length === 0 || password !== process.env.ADMIN_PASSWORD) {
+  const key = sessionKey();
+  if (!key || typeof password !== "string" || !safeEqual(password, process.env.ADMIN_PASSWORD!)) {
     return { error: "Wrong password." };
   }
+  const exp = Math.floor(Date.now() / 1000) + SESSION_SECONDS;
   const store = await cookies();
-  // The password itself is the session token — fine for a single-admin
-  // page with no per-user accounts. httpOnly + secure so it can't be
-  // read from client JS or sent over plain HTTP.
-  store.set(COOKIE_NAME, password, {
+  store.set(COOKIE_NAME, `${exp}.${sign(exp, key)}`, {
     httpOnly: true,
     secure: true,
-    sameSite: "lax",
+    sameSite: "strict",
     path: "/admin",
-    maxAge: 60 * 60 * 24 * 30,
+    maxAge: SESSION_SECONDS,
   });
   return { error: undefined };
 }
 
 export async function logout() {
   const store = await cookies();
-  store.delete(COOKIE_NAME);
+  // Same path as when it was set, or the browser keeps the cookie.
+  store.set(COOKIE_NAME, "", { httpOnly: true, secure: true, sameSite: "strict", path: "/admin", maxAge: 0 });
 }
 
 export async function isAuthed(): Promise<boolean> {
+  const key = sessionKey();
+  if (!key) return false;
   const store = await cookies();
-  const value = store.get(COOKIE_NAME)?.value;
-  return !!value && value === process.env.ADMIN_PASSWORD;
+  const value = store.get(COOKIE_NAME)?.value ?? "";
+  const [expRaw, sig] = value.split(".");
+  const exp = Number(expRaw);
+  if (!sig || !Number.isFinite(exp) || exp < Date.now() / 1000) return false;
+  return safeEqual(sig, sign(exp, key));
 }
 
 /// Server actions are callable directly (not just via the form that

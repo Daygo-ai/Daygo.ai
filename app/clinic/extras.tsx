@@ -242,7 +242,12 @@ export function AuditView({ clinicId, toast }: { clinicId: string; toast: (s: st
   useEffect(() => { api<{ entries: typeof rows }>("audit", { clinic_id: clinicId }).then((r) => setRows(r.entries)).catch((e) => { toast(e.message); setRows([]); }); }, [clinicId]); // eslint-disable-line react-hooks/exhaustive-deps
   const list = (rows ?? []).filter((r) => `${r.actor} ${r.patient} ${r.action}`.toLowerCase().includes(q.toLowerCase()));
   const csv = () => {
-    const out = ["when,who,what,patient", ...list.map((r) => [r.at, r.actor ?? "", ACTION_TEXT[r.action.split(":")[0]] ?? r.action, r.patient ?? ""].map((x) => `"${String(x).replace(/"/g, '""')}"`).join(","))].join("\n");
+    const out = ["when,who,what,patient", ...list.map((r) => [r.at, r.actor ?? "", ACTION_TEXT[r.action.split(":")[0]] ?? r.action, r.patient ?? ""].map((x) => {
+      // Neutralise spreadsheet formulas in user-controlled names (security review L1).
+      let v = String(x);
+      if (/^[=+\-@\t\r]/.test(v)) v = "'" + v;
+      return `"${v.replace(/"/g, '""')}"`;
+    }).join(","))].join("\n");
     const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([out], { type: "text/csv" })); a.download = "daygo-clinic-audit.csv"; a.click();
   };
   return (

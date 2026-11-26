@@ -162,11 +162,26 @@ function ClinicMockup({ lang }: { lang: Lang }) {
       if (show !== last.show) { title.current?.classList.toggle("gs-show", show); last.show = show; }
       if (shown !== target) raf = requestAnimationFrame(tick); // stop when settled
     };
+    // iPhone Safari ignores preload and loads no frames until the video has
+    // played once, so duration stays unknown and scrubbing never starts.
+    // A muted inline video may start without a tap: play it for an instant
+    // and pause, then scrub by scroll as usual. Retry on the first touch
+    // (Low Power Mode blocks the silent start).
+    const v0 = vid.current;
+    const prime = () => {
+      if (!v0 || v0.readyState >= 2) return;
+      v0.play().then(() => v0.pause()).catch(() => {});
+    };
+    v0?.addEventListener("loadedmetadata", read);
+    prime();
+    window.addEventListener("touchstart", prime, { passive: true });
     read();
     window.addEventListener("scroll", read, { passive: true });
     window.addEventListener("resize", read);
     return () => {
       cancelAnimationFrame(raf);
+      v0?.removeEventListener("loadedmetadata", read);
+      window.removeEventListener("touchstart", prime);
       window.removeEventListener("scroll", read);
       window.removeEventListener("resize", read);
     };
@@ -174,23 +189,30 @@ function ClinicMockup({ lang }: { lang: Lang }) {
   return (
     <div ref={track} className="relative mt-10" style={{ height: "680svh" }}>
       <div className="sticky top-0 flex h-[100svh] items-center overflow-hidden">
-        <div ref={box} className="relative mx-auto w-full max-w-[1180px]" style={{ willChange: "filter" }}>
-          <video
-            ref={vid}
-            src="/hero/clinic-mockup.mp4"
-            poster="/hero/clinic-mockup-poster.jpg"
-            muted
-            playsInline
-            preload="auto"
-            className="gs-lap block w-full"
-            style={{
-              WebkitMaskImage: "linear-gradient(to right, transparent, #000 8%, #000 92%, transparent), linear-gradient(to bottom, transparent, #000 8%, #000 92%, transparent)",
-              WebkitMaskComposite: "source-in",
-              maskImage: "linear-gradient(to right, transparent, #000 8%, #000 92%, transparent), linear-gradient(to bottom, transparent, #000 8%, #000 92%, transparent)",
-              maskComposite: "intersect",
-            }}
-            aria-label={c.laptopAria}
-          />
+        <div ref={box} className="relative mx-auto w-full max-w-[1180px]">
+          {/* The soft edges are painted on top in the page colour instead of a CSS
+              mask on the <video>: iPhone Safari renders a masked video blank. */}
+          <div className="gs-lap relative">
+            <video
+              ref={vid}
+              src="/hero/clinic-mockup.mp4"
+              poster="/hero/clinic-mockup-poster.jpg"
+              muted
+              playsInline
+              preload="auto"
+              disablePictureInPicture
+              className="block w-full"
+              aria-label={c.laptopAria}
+            />
+            <div
+              aria-hidden
+              className="pointer-events-none absolute -inset-px"
+              style={{
+                background:
+                  "linear-gradient(to right, #F2F1EC, rgba(242,241,236,0) 8%, rgba(242,241,236,0) 92%, #F2F1EC), linear-gradient(to bottom, #F2F1EC, rgba(242,241,236,0) 8%, rgba(242,241,236,0) 92%, #F2F1EC)",
+              }}
+            />
+          </div>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/hero/clinician.webp"

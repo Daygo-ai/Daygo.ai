@@ -1,18 +1,20 @@
 import Link from "next/link";
 import Image from "next/image";
 import { APP_STORE_URL, NAV_LINKS } from "@/lib/brand";
+import { localePath, type Lang } from "@/lib/i18n";
+import { LangToggle } from "@/components/LangToggle";
 
 /**
  * Flat black header shared by every page. Section links are absolute
  * (`/#pricing` rather than `#pricing`) so they still work from the legal,
  * support and labs pages, which have no such sections of their own.
  */
-export function Nav({ light = false }: { light?: boolean }) {
+export function Nav({ light = false, lang = "en" }: { light?: boolean; lang?: Lang }) {
   return (
     <header
-      className={`flex items-center justify-between px-6 py-5 md:px-10 ${light ? "bg-[#F2F1EC] text-black" : "bg-black text-white"}`}
+      className={`relative flex items-center justify-between px-6 py-5 md:px-10 ${light ? "bg-[#F2F1EC] text-black" : "bg-black text-white"}`}
     >
-      <Link href="/" className="flex items-center gap-2">
+      <Link href={localePath(lang, "/")} className="flex items-center gap-2">
         <Image
           src="/daygo-wordmark.webp"
           alt="Daygo"
@@ -23,21 +25,24 @@ export function Nav({ light = false }: { light?: boolean }) {
         />
       </Link>
 
-      <nav className={`hidden items-center gap-9 text-[13px] md:flex ${light ? "text-black/60" : "text-white/75"}`}>
+      <nav className={`absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 items-center gap-9 text-[13px] md:flex ${light ? "text-black/60" : "text-white/75"}`}>
         {NAV_LINKS.map((l) => (
-          <Link key={l.href} href={l.href} className={`transition ${light ? "hover:text-black" : "hover:text-white"}`}>
-            {l.label}
+          <Link key={l.href} href={localePath(lang, l.href)} className={`transition ${light ? "hover:text-black" : "hover:text-white"}`}>
+            {lang === "lt" ? l.lt : l.label}
           </Link>
         ))}
       </nav>
 
+      <div className="flex items-center gap-5">
+      <LangToggle light={light} />
       <a
         href={APP_STORE_URL}
         className={`flex items-center gap-2 rounded-full px-5 py-2.5 text-[13px] font-semibold transition ${light ? "bg-black text-white hover:bg-black/85" : "bg-white text-black hover:bg-white/90"}`}
       >
         <AppleMark className="h-4 w-4" />
-        Download App
+        {lang === "lt" ? "Atsisiųsti" : "Download App"}
       </a>
+      </div>
     </header>
   );
 }

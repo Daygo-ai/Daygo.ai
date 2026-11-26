@@ -3,8 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 import { Bodoni_Moda } from "next/font/google";
 import { BONE, LIME } from "@/lib/brand";
+import { useLang } from "@/lib/useLang";
 
-const bodoni = Bodoni_Moda({ subsets: ["latin"], weight: ["500"], style: ["normal"] });
+const bodoni = Bodoni_Moda({ subsets: ["latin", "latin-ext"], weight: ["500"], style: ["normal"] });
 
 const KEY = "daygo-intro";
 const MIN_MS = 1500; // the count always takes at least this long
@@ -28,6 +29,7 @@ function finish() {
  * hides it. Skipped on repeat views in the same session and for reduced motion.
  */
 export function IntroLoader() {
+  const tagline = useLang() === "lt" ? "Jūsų sveikata tarp vizitų" : "Your health, between visits";
   const [n, setN] = useState(0);
   const [leaving, setLeaving] = useState(false);
   const [gone, setGone] = useState(false);
@@ -102,7 +104,7 @@ export function IntroLoader() {
       <div className="flex items-center justify-between">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/daygo-wordmark.webp" alt="" className="h-[18px] w-auto invert" />
-        <span className="text-[10.5px] font-semibold uppercase tracking-[.2em] text-black/50">Your health, between visits</span>
+        <span className="text-[10.5px] font-semibold uppercase tracking-[.2em] text-black/50">{tagline}</span>
       </div>
 
       <div>

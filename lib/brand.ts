@@ -14,8 +14,8 @@ export const BONE = "#F2F1EC";
 export const INK = "#161913";
 
 export const NAV_LINKS = [
-  { href: "/#features", label: "Features" },
-  { href: "/clinics", label: "For clinics" },
-  { href: "/#pricing", label: "Pricing" },
-  { href: "/faq", label: "FAQ" },
+  { href: "/#features", label: "Features", lt: "Funkcijos" },
+  { href: "/clinics", label: "For clinics", lt: "Klinikoms" },
+  { href: "/#pricing", label: "Pricing", lt: "Kainos" },
+  { href: "/faq", label: "FAQ", lt: "DUK" },
 ];

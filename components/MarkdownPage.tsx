@@ -3,16 +3,17 @@ import remarkGfm from "remark-gfm";
 import { Nav } from "@/components/Nav";
 import { Footer } from "@/components/Footer";
 import { BONE, LIME } from "@/lib/brand";
+import type { Lang } from "@/lib/i18n";
 
 /**
  * Renders one of the legal markdown files inside the shared nav + footer
  * chrome, in the editorial light theme: bone page, black type, mono
  * headings that echo the section labels used across the marketing pages.
  */
-export function MarkdownPage({ markdown }: { markdown: string }) {
+export function MarkdownPage({ markdown, lang = "en" }: { markdown: string; lang?: Lang }) {
   return (
     <>
-      <Nav />
+      <Nav lang={lang} />
       <main style={{ background: BONE }} className="px-6 py-16 text-black md:px-10 md:py-24">
         <article className="prose-daygo mx-auto max-w-3xl">
           <ReactMarkdown remarkPlugins={[remarkGfm]}>{markdown}</ReactMarkdown>
@@ -28,6 +29,8 @@ export function MarkdownPage({ markdown }: { markdown: string }) {
         .prose-daygo li { margin: 0.35rem 0; line-height: 1.6; font-size: 0.9375rem; }
         .prose-daygo a { color: #000; text-decoration: underline; text-decoration-color: ${LIME}; text-decoration-thickness: 3px; text-underline-offset: 3px; }
         .prose-daygo a:hover { background: ${LIME}; }
+        .prose-daygo blockquote { margin: 1.25rem 0; padding: 0.75rem 1rem; border-left: 3px solid ${LIME}; background: rgba(0,0,0,0.03); }
+        .prose-daygo blockquote p { margin: 0; font-size: 0.875rem; }
         .prose-daygo em { color: rgba(0,0,0,0.5); font-style: italic; }
         .prose-daygo strong { color: #000; font-weight: 700; }
         .prose-daygo hr { border: 0; border-top: 1px solid rgba(0,0,0,0.12); margin: 2.5rem 0; }
@@ -36,7 +39,7 @@ export function MarkdownPage({ markdown }: { markdown: string }) {
         .prose-daygo th, .prose-daygo td { border: 1px solid rgba(0,0,0,0.12); padding: 0.5rem 0.75rem; text-align: left; }
         .prose-daygo th { font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.6875rem; }
       `}</style>
-      <Footer />
+      <Footer lang={lang} />
     </>
   );
 }

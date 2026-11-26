@@ -10,7 +10,8 @@ import path from "node:path";
  * deployed site is self-contained; keep `../legal/*.md` in sync by
  * hand when either doc changes.
  */
-export async function readLegalMarkdown(name: "privacy-policy" | "terms"): Promise<string> {
-  const filePath = path.resolve(process.cwd(), "legal", `${name}.md`);
+export async function readLegalMarkdown(name: "privacy-policy" | "terms", lang: "en" | "lt" = "en"): Promise<string> {
+  // Lithuanian versions sit next to the originals as `<name>.lt.md`.
+  const filePath = path.resolve(process.cwd(), "legal", lang === "lt" ? `${name}.lt.md` : `${name}.md`);
   return fs.readFile(filePath, "utf-8");
 }

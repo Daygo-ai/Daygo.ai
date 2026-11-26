@@ -4,12 +4,14 @@ import { useEffect, useRef } from "react";
 import { Bodoni_Moda } from "next/font/google";
 import { APP_STORE_URL, LIME } from "@/lib/brand";
 import { ScrollWords } from "@/components/Motion";
+import { useLang } from "@/lib/useLang";
+import { localePath } from "@/lib/i18n";
 
 // Editorial opening for the homepage: hero that melts into the paper,
 // a letter-by-letter statement with inline photo pills, and a quick-facts
 // block. Plain DOM + one scroll listener, no animation library.
 
-const bodoni = Bodoni_Moda({ subsets: ["latin"], weight: ["500"], style: ["normal"] });
+const bodoni = Bodoni_Moda({ subsets: ["latin", "latin-ext"], weight: ["500"], style: ["normal"] });
 
 const PAPER = "#F2F1EC";
 const INK = "#141412";
@@ -43,6 +45,52 @@ function Pill({ src, i }: { src: string; i: number }) {
   );
 }
 
+/** Letter count of a phrase without spaces, to chain letter animations. */
+const len = (t: string) => t.replace(/ /g, "").length;
+
+const ED = {
+  en: {
+    eyebrow: "You · Daygo · Your clinic",
+    title: ["Between", "visits."],
+    heroAlt: "A hand holding a phone with the Daygo app",
+    heroText: "Your watch, blood tests and how you feel in one app. With your consent, your clinic sees what changed between visits.",
+    getApp: "Get the app →",
+    forClinics: "For clinics →",
+    statementLabel: "Daygo connects patients and clinics",
+    statement: ["See you", "in a year", "isn't care."],
+    moonAlt: ["The full Moon", "A waning Moon"],
+    statementBody: "Most people see their clinic a few times a year. Daygo is the link in between: your app on one side, your clinician’s view on the other.",
+    howTitle: "How it works",
+    howBody: "Three steps between you and your clinic. You stay in control of every one.",
+    steps: [
+      ["Connect", "Your watch, your blood tests and how you feel, in one app."],
+      ["Share", "With your consent, your clinician sees what changed since your last visit."],
+      ["Follow up", "Retests and plans land on your phone, not in a forgotten letter."],
+    ],
+    sources: "Apple Health · Garmin · Oura · WHOOP · Any blood test · EU-hosted · Revoke any time",
+  },
+  lt: {
+    eyebrow: "Jūs · Daygo · Jūsų klinika",
+    title: ["Tarp", "vizitų."],
+    heroAlt: "Ranka laiko telefoną su Daygo programėle",
+    heroText: "Jūsų laikrodis, kraujo tyrimai ir savijauta vienoje programėlėje. Gavusi jūsų sutikimą, klinika mato, kas pasikeitė tarp vizitų.",
+    getApp: "Gauti programėlę →",
+    forClinics: "Klinikoms →",
+    statementLabel: "Daygo sujungia pacientus ir klinikas",
+    statement: ["„Pasimatysim", "po metų“", "nėra priežiūra."],
+    moonAlt: ["Pilnatis", "Delčia"],
+    statementBody: "Dauguma žmonių savo klinikoje lankosi vos kelis kartus per metus. Daygo yra jungtis tarp vizitų: viena pusė – jūsų programėlė, kita – gydytojo vaizdas.",
+    howTitle: "Kaip tai veikia",
+    howBody: "Trys žingsniai tarp jūsų ir jūsų klinikos. Kiekvieną jų kontroliuojate jūs.",
+    steps: [
+      ["Prijunkite", "Jūsų laikrodis, kraujo tyrimai ir savijauta vienoje programėlėje."],
+      ["Dalinkitės", "Gavęs jūsų sutikimą, gydytojas mato, kas pasikeitė nuo paskutinio vizito."],
+      ["Stebėkite", "Pakartotiniai tyrimai ir planai ateina į telefoną, o ne užmirštame laiške."],
+    ],
+    sources: "Apple Health · Garmin · Oura · WHOOP · Bet kokie kraujo tyrimai · Duomenys ES · Atšaukite bet kada",
+  },
+};
+
 const JOURNEY = [
   { t: "You live your life", b: "Walk, run, sleep. Nothing new to learn." },
   { t: "Your watch tracks it", b: "Heart rate, HRV, sleep, all automatic." },
@@ -51,19 +99,21 @@ const JOURNEY = [
 ];
 
 /** Moon photo in a circle with a soft lime glow. */
-function MoonPill({ i, phase = false }: { i: number; phase?: boolean }) {
+function MoonPill({ i, phase = false, alt }: { i: number; phase?: boolean; alt: string }) {
   return (
     <span
       className="pill relative mx-[0.2em] inline-block overflow-hidden rounded-full align-[-0.08em]"
       style={{ ["--i" as string]: i, background: "#0d0d0c", boxShadow: "inset -0.04em -0.02em 0 0.012em #CDEE3C, 0 0 0.25em rgba(205,238,60,.25)" }}
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={phase ? "/hero/moon-2.jpg?v=2" : "/hero/moon.jpg?v=6"} alt={phase ? "A waning Moon" : "The full Moon"} className="h-full w-full object-cover" />
+      <img src={phase ? "/hero/moon-2.jpg?v=2" : "/hero/moon.jpg?v=6"} alt={alt} className="h-full w-full object-cover" />
     </span>
   );
 }
 
 export function Editorial() {
+  const lang = useLang();
+  const c = ED[lang];
   const heroRef = useRef<HTMLElement>(null);
   const portraitRef = useRef<HTMLDivElement>(null);
   const journeyRef = useRef<HTMLElement>(null);
@@ -133,29 +183,29 @@ export function Editorial() {
       {/* ── 1 · HERO ── */}
       <section ref={heroRef} className="relative overflow-hidden px-5 pb-12 pt-14 sm:px-8 md:px-12">
         <p className="ed-fade text-center text-[10.5px] font-semibold uppercase tracking-[.2em]" style={{ color: ACCENT }}>
-          You · Daygo · Your clinic
+          {c.eyebrow}
         </p>
         <h1 className={`${bodoni.className} ed-title relative z-0 mt-4 text-center text-[17vw] uppercase leading-[.8] tracking-[.01em] md:text-[12.5vw]`}>
-          <Letters text="Between" />
+          <Letters text={c.title[0]} />
           <br />
-          <Letters text="visits." start={7} />
+          <Letters text={c.title[1]} start={len(c.title[0])} />
         </h1>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/hero/phone-cutout.webp"
-          alt="A hand holding a phone with the Daygo app"
+          alt={c.heroAlt}
           className="ed-cut relative z-10 mx-auto -mt-[16vw] w-[80vw] max-w-[520px] md:-mt-[14vw] md:w-[32vw]"
         />
         <div className="ed-fade relative z-20 mt-8 flex flex-col gap-6 md:absolute md:inset-x-12 md:bottom-[84px] md:mt-0 md:flex-row md:items-end md:justify-between" style={{ transitionDelay: "1s" }}>
           <p className="max-w-[17rem] text-[15px] leading-relaxed" style={{ color: `${INK}B8` }}>
-            Your watch, blood tests and how you feel in one app. With your consent, your clinic sees what changed between visits.
+            {c.heroText}
           </p>
           <div className="flex flex-wrap gap-3">
             <a href={APP_STORE_URL} className="rounded-full px-6 py-3 text-[11px] font-semibold uppercase tracking-[.16em] text-white" style={{ background: INK }}>
-              Get the app →
+              {c.getApp}
             </a>
-            <a href="/clinics" className="rounded-full border bg-white/50 px-6 py-3 text-[11px] font-semibold uppercase tracking-[.16em] backdrop-blur" style={{ borderColor: `${INK}30` }}>
-              For clinics →
+            <a href={localePath(lang, "/clinics")} className="rounded-full border bg-white/50 px-6 py-3 text-[11px] font-semibold uppercase tracking-[.16em] backdrop-blur" style={{ borderColor: `${INK}30` }}>
+              {c.forClinics}
             </a>
           </div>
         </div>
@@ -165,20 +215,20 @@ export function Editorial() {
       <section className="reveal relative" style={{ height: "170svh" }}>
         <div data-scene className="sticky top-0 flex h-[100svh] flex-col items-center justify-center px-6 text-center">
         <p className="ed-up text-[10.5px] font-semibold uppercase tracking-[.2em]" style={{ color: ACCENT }}>
-          Daygo connects patients and clinics
+          {c.statementLabel}
         </p>
         <h2 className={`${bodoni.className} mt-8 text-[8.6vw] uppercase leading-[1.06] md:text-[clamp(40px,7.2vw,132px)]`}>
-          <Letters text="See you" />
-          <MoonPill i={0} />
-          <Letters text="in a year" start={6} />
+          <Letters text={c.statement[0]} />
+          <MoonPill i={0} alt={c.moonAlt[0]} />
+          <Letters text={c.statement[1]} start={len(c.statement[0])} />
           <br />
-          <MoonPill i={1} phase />
-          <Letters text="isn't care." start={13} />
+          <MoonPill i={1} phase alt={c.moonAlt[1]} />
+          <Letters text={c.statement[2]} start={len(c.statement[0]) + len(c.statement[1])} />
         </h2>
         <ScrollWords
           className="mt-10 max-w-lg text-[17px] leading-relaxed md:text-[19px]"
           style={{ color: INK }}
-          text="Most people see their clinic a few times a year. Daygo is the link in between: your app on one side, your clinician’s view on the other."
+          text={c.statementBody}
         />
         </div>
       </section>
@@ -190,21 +240,17 @@ export function Editorial() {
           {/* header: title left, one line of context right */}
           <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
             <h2 className={`${bodoni.className} text-[12vw] uppercase leading-[.95] md:text-[clamp(40px,5.4vw,84px)]`}>
-              <Letters text="How it works" />
+              <Letters text={c.howTitle} />
             </h2>
             <p className="ed-up max-w-xs text-[15px] leading-relaxed md:pb-3 md:text-right" style={{ color: `${INK}B8`, transitionDelay: ".3s" }}>
-              Three steps between you and your clinic. You stay in control of every one.
+              {c.howBody}
             </p>
           </div>
 
           {/* three steps as a sequence: a hairline with a lime node per step */}
           <ol className="relative mt-16 grid gap-12 md:mt-20 md:grid-cols-3 md:gap-0">
             <span aria-hidden className="absolute left-0 right-0 top-[5px] hidden h-px md:block" style={{ background: `${INK}29` }} />
-            {[
-              ["Connect", "Your watch, your blood tests and how you feel, in one app."],
-              ["Share", "With your consent, your clinician sees what changed since your last visit."],
-              ["Follow up", "Retests and plans land on your phone, not in a forgotten letter."],
-            ].map(([t, b], n) => (
+            {c.steps.map(([t, b], n) => (
               <li key={t} className="ed-up relative md:pr-10" style={{ transitionDelay: `${0.35 + n * 0.14}s` }}>
                 <span aria-hidden className="relative block h-[11px] w-[11px] rounded-full" style={{ background: LIME, boxShadow: `0 0 0 4px ${PAPER}` }} />
                 <span className={`${bodoni.className} mt-8 block text-[64px] leading-none md:text-[80px]`} style={{ color: `${INK}26` }}>
@@ -217,7 +263,7 @@ export function Editorial() {
           </ol>
 
           <p className="ed-up mt-16 border-t pt-6 text-[10.5px] font-semibold uppercase tracking-[.2em]" style={{ borderColor: `${INK}1A`, color: `${INK}80`, transitionDelay: ".8s" }}>
-            Apple Health · Garmin · Oura · WHOOP · Any blood test · EU-hosted · Revoke any time
+            {c.sources}
           </p>
         </div>
         </div>
@@ -266,12 +312,26 @@ export function Editorial() {
 }
 
 
-const FEATURES_ED = [
-  { t: "Sleep & recovery", b: "Understand your sleep and get recommendations that fit your real life.", img: "/phones/today.webp", alt: "Daygo Today screen: 71% readiness, train normally" },
-  { t: "Training", b: "See patterns, avoid overtraining and improve consistently.", img: "/phones/training.webp", alt: "Daygo workout screen: a 7 km run mapped by heart effort" },
-  { t: "Bloodwork", b: "Turn your lab results into plain English and practical next steps.", img: "/phones/labs.webp", alt: "Daygo lab values: 4 to watch, 17 in range" },
-  { t: "AI coach", b: "Remembers what matters and learns from your patterns over time.", img: "/phones/coach.webp", alt: "Daygo coach chat explaining a high CRP result" },
-];
+const FEATURES_BY_LANG = {
+  en: [
+    { t: "Sleep & recovery", b: "Understand your sleep and get recommendations that fit your real life.", img: "/phones/today.webp", alt: "Daygo Today screen: 71% readiness, train normally" },
+    { t: "Training", b: "See patterns, avoid overtraining and improve consistently.", img: "/phones/training.webp", alt: "Daygo workout screen: a 7 km run mapped by heart effort" },
+    { t: "Bloodwork", b: "Turn your lab results into plain English and practical next steps.", img: "/phones/labs.webp", alt: "Daygo lab values: 4 to watch, 17 in range" },
+    { t: "AI coach", b: "Remembers what matters and learns from your patterns over time.", img: "/phones/coach.webp", alt: "Daygo coach chat explaining a high CRP result" },
+  ],
+  lt: [
+    { t: "Miegas ir atsistatymas", b: "Supraskite savo miegą ir gaukite rekomendacijas, kurios tinka jūsų tikram gyvenimui.", img: "/phones/today.webp", alt: "Daygo „Šiandien“ ekranas: 71 % pasirengimas, treniruokitės įprastai" },
+    { t: "Treniruotės", b: "Pastebėkite dėsningumus, išvenkite persitreniravimo ir tobulėkite nuosekliai.", img: "/phones/training.webp", alt: "Daygo treniruotės ekranas: 7 km bėgimas pagal širdies krūvį" },
+    { t: "Kraujo tyrimai", b: "Tyrimų rezultatai paprasta kalba ir su praktiniais tolesniais žingsniais.", img: "/phones/labs.webp", alt: "Daygo tyrimų rodikliai: 4 stebėtini, 17 normos ribose" },
+    { t: "DI treneris", b: "Prisimena, kas svarbu, ir laikui bėgant mokosi iš jūsų dėsningumų.", img: "/phones/coach.webp", alt: "Daygo trenerio pokalbis, aiškinantis padidėjusį CRB" },
+  ],
+};
+const FEATURES_ED = FEATURES_BY_LANG.en;
+
+const FEAT_HEAD = {
+  en: { label: "For patients", title: ["Not another tracker.", "A coach."], body: "Daygo connects your data, adds context, and turns it into clear, personal guidance you can actually follow." },
+  lt: { label: "Pacientams", title: ["Ne dar vienas sekiklis.", "Treneris."], body: "Daygo sujungia jūsų duomenis, prideda kontekstą ir paverčia juos aiškiais, asmeniškais patarimais, kurių iš tikrųjų galima laikytis." },
+};
 
 /**
  * Patient features as a pinned scroll scene: the headline and feature list stay
@@ -279,6 +339,9 @@ const FEATURES_ED = [
  * On small screens it falls back to a plain stacked list.
  */
 export function EditorialFeatures() {
+  const lang = useLang();
+  const feats = FEATURES_BY_LANG[lang];
+  const head = FEAT_HEAD[lang];
   const track = useRef<HTMLDivElement>(null);
   const phones = useRef<(HTMLImageElement | null)[]>([]);
   const items = useRef<(HTMLDivElement | null)[]>([]);
@@ -352,15 +415,15 @@ export function EditorialFeatures() {
       <div className="reveal relative" style={{ height: "160svh" }}>
         <div className="sticky top-0 flex h-[100svh] flex-col items-center justify-center px-6 text-center">
           <p className="ed-up text-[10.5px] font-semibold uppercase tracking-[.2em]" style={{ color: ACCENT }}>
-            For patients
+            {head.label}
           </p>
           <h2 className={`${bodoni.className} mt-8 uppercase leading-[1] text-[11vw] md:text-[clamp(48px,7vw,124px)]`}>
-            <Letters text="Not another tracker." />
+            <Letters text={head.title[0]} />
             <br />
-            <Letters text="A coach." start={18} />
+            <Letters text={head.title[1]} start={len(head.title[0])} />
           </h2>
           <p className="ed-up mt-10 max-w-md text-[16px] leading-relaxed" style={{ color: `${INK}B8`, transitionDelay: ".7s" }}>
-            Daygo connects your data, adds context, and turns it into clear, personal guidance you can actually follow.
+            {head.body}
           </p>
         </div>
       </div>
@@ -372,7 +435,7 @@ export function EditorialFeatures() {
             <div>
               {/* only the current feature shows; it crossfades with the phone */}
               <div className="relative h-[10.5rem]">
-                {FEATURES_ED.map((f, i) => (
+                {feats.map((f, i) => (
                   <div
                     key={f.t}
                     ref={(el) => {
@@ -381,7 +444,7 @@ export function EditorialFeatures() {
                     className="ft-item absolute inset-x-0 top-0"
                   >
                     <p className="text-[10.5px] font-semibold tracking-[.2em]" style={{ color: ACCENT }}>
-                      0{i + 1} / 0{FEATURES_ED.length}
+                      0{i + 1} / 0{feats.length}
                     </p>
                     <p className={`${bodoni.className} mt-4 text-[clamp(30px,3vw,44px)] uppercase leading-none`}>{f.t}</p>
                     <p className="mt-4 max-w-md text-[16px] leading-relaxed" style={{ color: `${INK}99` }}>{f.b}</p>
@@ -390,7 +453,7 @@ export function EditorialFeatures() {
               </div>
 
               <div className="mt-6 flex max-w-[18rem] gap-2">
-                {FEATURES_ED.map((f, i) => (
+                {feats.map((f, i) => (
                   <span key={f.t} className="h-[2px] flex-1 overflow-hidden rounded" style={{ background: `${INK}1A` }}>
                     <span
                       ref={(el) => {
@@ -405,7 +468,7 @@ export function EditorialFeatures() {
             </div>
 
             <div className="relative mx-auto h-[min(78svh,720px)] aspect-[1015/2000]">
-              {FEATURES_ED.map((f, i) => (
+              {feats.map((f, i) => (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   key={f.img}
@@ -426,7 +489,7 @@ export function EditorialFeatures() {
       {/* mobile: simple stacked list */}
       <div className="reveal px-5 pb-24 sm:px-8 md:hidden">
         <div className="grid gap-14 sm:grid-cols-2">
-          {FEATURES_ED.map((f, i) => (
+          {feats.map((f, i) => (
             <div key={f.t} className="ed-up" style={{ transitionDelay: `${0.3 + i * 0.1}s` }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={f.img} alt={f.alt} loading="lazy" className="mb-6 block w-full max-w-[220px] drop-shadow-[0_24px_40px_rgba(20,20,18,0.18)]" />

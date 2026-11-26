@@ -4,8 +4,81 @@ import { useEffect, useRef } from "react";
 import { APP_STORE_URL, BOOK_CALL_URL } from "@/lib/brand";
 import { Bodoni_Moda } from "next/font/google";
 import { RotatingWords } from "@/components/Motion";
+import { useLang } from "@/lib/useLang";
+import { localePath, type Lang } from "@/lib/i18n";
 
-const bodoni = Bodoni_Moda({ subsets: ["latin"], weight: ["500"], style: ["normal"] });
+const GS = {
+  en: {
+    mockLabel: "Daygo for clinics",
+    mockTitle: ["See every patient,", "between visits."],
+    laptopAria: "The Daygo clinic dashboard on a laptop",
+    clinicianAlt: "A clinician looking at the Daygo dashboard",
+    tagsTop: ["• For clinics", "• Between visits"],
+    insight: "Insight",
+    insightBody: "One view of what changed for each patient since you last saw them.",
+    insightMuted: " Every visit starts from where they are, not from zero.",
+    forClinicsBtn: "Daygo for clinics",
+    clinicsWord: "Clinics",
+    tags: ["/ For private clinics", "/ Preventive care", "/ Between visits"],
+    intro: "Your patients already track their health. Daygo brings it to you, with their consent.",
+    ctaTitle: ["Ready to take", "control of your"],
+    ctaWords: ["sleep?", "training?", "bloodwork?", "health?"],
+    download: "Download on the App Store",
+    founderAlt: "Marijus Dovydaitis, founder of Daygo",
+    founderLine: "Run a clinic? Talk with Marijus",
+    founderRole: "Founder of Daygo",
+    bookCall: "Book a 30-min call",
+  },
+  lt: {
+    mockLabel: "Daygo klinikoms",
+    mockTitle: ["Matykite kiekvieną pacientą", "tarp vizitų."],
+    laptopAria: "Daygo klinikos skydelis nešiojamajame kompiuteryje",
+    clinicianAlt: "Gydytojas žiūri į Daygo skydelį",
+    tagsTop: ["• Klinikoms", "• Tarp vizitų"],
+    insight: "Įžvalga",
+    insightBody: "Vienoje vietoje matote, kas pasikeitė kiekvienam pacientui nuo paskutinio susitikimo.",
+    insightMuted: " Kiekvienas vizitas prasideda nuo to, kur pacientas yra dabar, o ne nuo nulio.",
+    forClinicsBtn: "Daygo klinikoms",
+    clinicsWord: "Klinikos",
+    tags: ["/ Privačioms klinikoms", "/ Prevencinė priežiūra", "/ Tarp vizitų"],
+    intro: "Jūsų pacientai jau stebi savo sveikatą. Daygo, gavusi jų sutikimą, perduoda tai jums.",
+    ctaTitle: ["Pasiruošę", "pasirūpinti savo"],
+    ctaWords: ["miegu?", "treniruotėmis?", "tyrimais?", "sveikata?"],
+    download: "Atsisiųsti iš App Store",
+    founderAlt: "Marijus Dovydaitis, Daygo įkūrėjas",
+    founderLine: "Turite kliniką? Pasikalbėkite su Marijumi",
+    founderRole: "Daygo įkūrėjas",
+    bookCall: "Užsisakyti 30 min. pokalbį",
+  },
+};
+
+/** Letter spans for the title reveal; --k counts letters across both lines. */
+function TitleLetters({ lines }: { lines: string[] }) {
+  let k = 0;
+  return (
+    <>
+      {lines.map((line, li) => (
+        <span key={li}>
+          {li > 0 && <br />}
+          {line.split(" ").map((word, wi, arr) => (
+            <span key={wi}>
+              <span className="inline-block whitespace-nowrap">
+                {word.split("").map((ch, ci) => (
+                  <span key={ci} className="gs-l" style={{ ["--k" as string]: k++ }}>
+                    {ch}
+                  </span>
+                ))}
+              </span>
+              {wi < arr.length - 1 ? " " : null}
+            </span>
+          ))}
+        </span>
+      ))}
+    </>
+  );
+}
+
+const bodoni = Bodoni_Moda({ subsets: ["latin", "latin-ext"], weight: ["500"], style: ["normal"] });
 
 // Light take on the "glass over full-bleed image" layout: mono slash labels,
 // left-accent badges, a frosted numbered panel and a founder contact card.
@@ -39,7 +112,8 @@ const d = (ms: number) => ({ transitionDelay: `${ms}ms` });
 
 /** Reversed MacBook mockup film that plays once when it comes into view, with the
  *  clinician cut-out layered in front (over-the-shoulder). */
-function ClinicMockup() {
+function ClinicMockup({ lang }: { lang: Lang }) {
+  const c = GS[lang];
   const track = useRef<HTMLDivElement>(null);
   const box = useRef<HTMLDivElement>(null);
   const vid = useRef<HTMLVideoElement>(null);
@@ -114,12 +188,12 @@ function ClinicMockup() {
               maskImage: "linear-gradient(to right, transparent, #000 8%, #000 92%, transparent), linear-gradient(to bottom, transparent, #000 8%, #000 92%, transparent)",
               maskComposite: "intersect",
             }}
-            aria-label="The Daygo clinic dashboard on a laptop"
+            aria-label={c.laptopAria}
           />
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/hero/clinician.webp"
-            alt="A clinician looking at the Daygo dashboard"
+            alt={c.clinicianAlt}
             className="gs-clin pointer-events-none absolute bottom-[-60%] left-1/2 w-[86%] -translate-x-1/2"
             style={{ WebkitMaskImage: "linear-gradient(to bottom, #000 62%, transparent 92%)", maskImage: "linear-gradient(to bottom, #000 62%, transparent 92%)" }}
           />
@@ -135,18 +209,10 @@ function ClinicMockup() {
         />
         <div ref={title} className="gs-title pointer-events-none absolute inset-0 z-20 flex flex-col items-center justify-center px-6 text-center">
           <p className="gs-l mb-6 text-[11px] font-medium uppercase tracking-[0.2em] text-black/50" style={{ ["--k" as string]: 0 }}>
-            Daygo for clinics
+            {c.mockLabel}
           </p>
           <h2 className="text-5xl font-normal leading-[1.05] tracking-tight sm:text-6xl lg:text-8xl">
-            <span className="inline-block whitespace-nowrap"><span className="gs-l" style={{ ["--k" as string]: 0 }}>S</span><span className="gs-l" style={{ ["--k" as string]: 1 }}>e</span><span className="gs-l" style={{ ["--k" as string]: 2 }}>e</span></span>
-            {" "}
-            <span className="inline-block whitespace-nowrap"><span className="gs-l" style={{ ["--k" as string]: 3 }}>e</span><span className="gs-l" style={{ ["--k" as string]: 4 }}>v</span><span className="gs-l" style={{ ["--k" as string]: 5 }}>e</span><span className="gs-l" style={{ ["--k" as string]: 6 }}>r</span><span className="gs-l" style={{ ["--k" as string]: 7 }}>y</span></span>
-            {" "}
-            <span className="inline-block whitespace-nowrap"><span className="gs-l" style={{ ["--k" as string]: 8 }}>p</span><span className="gs-l" style={{ ["--k" as string]: 9 }}>a</span><span className="gs-l" style={{ ["--k" as string]: 10 }}>t</span><span className="gs-l" style={{ ["--k" as string]: 11 }}>i</span><span className="gs-l" style={{ ["--k" as string]: 12 }}>e</span><span className="gs-l" style={{ ["--k" as string]: 13 }}>n</span><span className="gs-l" style={{ ["--k" as string]: 14 }}>t</span><span className="gs-l" style={{ ["--k" as string]: 15 }}>,</span></span>
-            <br />
-            <span className="inline-block whitespace-nowrap"><span className="gs-l" style={{ ["--k" as string]: 16 }}>b</span><span className="gs-l" style={{ ["--k" as string]: 17 }}>e</span><span className="gs-l" style={{ ["--k" as string]: 18 }}>t</span><span className="gs-l" style={{ ["--k" as string]: 19 }}>w</span><span className="gs-l" style={{ ["--k" as string]: 20 }}>e</span><span className="gs-l" style={{ ["--k" as string]: 21 }}>e</span><span className="gs-l" style={{ ["--k" as string]: 22 }}>n</span></span>
-            {" "}
-            <span className="inline-block whitespace-nowrap"><span className="gs-l" style={{ ["--k" as string]: 23 }}>v</span><span className="gs-l" style={{ ["--k" as string]: 24 }}>i</span><span className="gs-l" style={{ ["--k" as string]: 25 }}>s</span><span className="gs-l" style={{ ["--k" as string]: 26 }}>i</span><span className="gs-l" style={{ ["--k" as string]: 27 }}>t</span><span className="gs-l" style={{ ["--k" as string]: 28 }}>s</span><span className="gs-l" style={{ ["--k" as string]: 29 }}>.</span></span>
+            <TitleLetters lines={c.mockTitle} />
           </h2>
         </div>
         <div
@@ -165,7 +231,8 @@ function ClinicMockup() {
 
 /** Dark, full-bleed closing scene for the clinic section: the dashboard drifts
  *  in slowly behind frosted glass as you scroll through it. */
-function ClinicInsight() {
+function ClinicInsight({ lang }: { lang: Lang }) {
+  const c = GS[lang];
   const sec = useRef<HTMLDivElement>(null);
   const bg = useRef<HTMLImageElement>(null);
   useEffect(() => {
@@ -244,20 +311,20 @@ function ClinicInsight() {
           }}
         />
         <div className="flex items-center justify-between text-[10px] font-medium uppercase tracking-[0.2em] text-white/70">
-          <span className="gs-r" style={d(80)}>• For clinics</span>
-          <span className="gs-r" style={d(160)}>• Between visits</span>
+          <span className="gs-r" style={d(80)}>{c.tagsTop[0]}</span>
+          <span className="gs-r" style={d(160)}>{c.tagsTop[1]}</span>
         </div>
 
         <div className="mt-[38vh] md:mt-0">
-          <p className="gs-r text-[10px] font-medium uppercase tracking-[0.2em] text-white/60" style={d(120)}>Insight</p>
+          <p className="gs-r text-[10px] font-medium uppercase tracking-[0.2em] text-white/60" style={d(120)}>{c.insight}</p>
           <p className="gs-r mt-3 max-w-lg text-xl leading-snug sm:text-2xl" style={d(200)}>
-            One view of what changed for each patient since you last saw them.
-            <span className="text-white/60"> Every visit starts from where they are, not from zero.</span>
+            {c.insightBody}
+            <span className="text-white/60">{c.insightMuted}</span>
           </p>
 
           <div className="gs-r mt-10" style={d(320)}>
-            <a href="/clinics" className="inline-flex items-center gap-1.5 rounded-full bg-white px-6 py-3 text-[13px] font-medium text-black transition-colors duration-300 hover:bg-white/85">
-              Daygo for clinics <ChevronRight size={14} />
+            <a href={localePath(lang, "/clinics")} className="inline-flex items-center gap-1.5 rounded-full bg-white px-6 py-3 text-[13px] font-medium text-black transition-colors duration-300 hover:bg-white/85">
+              {c.forClinicsBtn} <ChevronRight size={14} />
             </a>
           </div>
         </div>
@@ -270,7 +337,7 @@ function ClinicInsight() {
         className={`${bodoni.className} pointer-events-none absolute bottom-[-0.08em] right-6 z-10 hidden select-none uppercase leading-none text-white md:block`}
         style={{ fontSize: "clamp(4.5rem, 8.5vw, 8.5rem)" }}
       >
-        Clinics
+        {c.clinicsWord}
       </p>
     </div>
   );
@@ -278,26 +345,28 @@ function ClinicInsight() {
 
 export function ClinicGlass() {
   const ref = useReveal();
+  const lang = useLang();
+  const c = GS[lang];
   return (
     <section ref={ref} id="clinics" style={{ background: "#F2F1EC", color: INK }} className="isolate relative flex min-h-[100svh] scroll-mt-6 flex-col justify-between overflow-x-clip px-5 pb-12 pt-24 sm:px-8 md:px-12 md:pb-16">
 
       <div className="mx-auto flex w-full max-w-[1180px] flex-col gap-8 sm:flex-row sm:justify-between">
         <div className="flex flex-col gap-2">
-          {["/ For private clinics", "/ Preventive care", "/ Between visits"].map((t, i) => (
+          {c.tags.map((t, i) => (
             <p key={t} className="gs-r text-xs font-medium uppercase tracking-[0.15em]" style={d(150 + i * 120)}>{t}</p>
           ))}
         </div>
         <p className="gs-r max-w-xs text-lg leading-relaxed sm:text-right sm:text-xl" style={d(300)}>
-          Your patients already track their health. Daygo brings it to you, with their consent.
+          {c.intro}
         </p>
       </div>
 
-      <ClinicMockup />
+      <ClinicMockup lang={lang} />
 
       {/* the card holds in place for a moment on desktop, like the other key sections */}
       <div className="relative mt-20 md:mt-0 md:h-[165svh]">
         <div className="md:sticky md:top-0 md:flex md:h-[100svh] md:items-center">
-          <ClinicInsight />
+          <ClinicInsight lang={lang} />
         </div>
       </div>
       <Styles />
@@ -307,6 +376,8 @@ export function ClinicGlass() {
 
 export function FounderCTA() {
   const ref = useReveal();
+  const lang = useLang();
+  const c = GS[lang];
   return (
     <section ref={ref} className="isolate relative overflow-hidden px-5 pb-[17vw] pt-20 sm:px-8 md:px-12 md:pt-28" style={{ background: "#F2F1EC", color: INK }}>
       {/* the official wordmark, edge to edge and faint, as a backdrop */}
@@ -321,27 +392,27 @@ export function FounderCTA() {
       <div className="flex flex-col gap-10 md:flex-row md:items-end md:justify-between">
         <div>
           <h2 className="gs-r text-5xl font-normal leading-[1.05] tracking-tight sm:text-6xl lg:text-7xl" style={d(150)}>
-            Ready to take
+            {c.ctaTitle[0]}
             <br />
-            control of your
+            {c.ctaTitle[1]}
             <br />
-            <RotatingWords words={["sleep?", "training?", "bloodwork?", "health?"]} />
+            <RotatingWords key={lang} words={c.ctaWords} />
           </h2>
           <div className="gs-r mt-8 flex flex-wrap gap-3" style={d(300)}>
             <a href={APP_STORE_URL} className="flex items-center gap-1 rounded-full px-5 py-2.5 text-sm font-medium text-white hover:opacity-85" style={{ background: INK }}>
-              Download on the App Store <ChevronRight size={14} />
+              {c.download} <ChevronRight size={14} />
             </a>
           </div>
         </div>
 
         <div className="gs-r flex items-center gap-4 self-start rounded-xl border border-black/10 bg-white/70 p-3 shadow-[0_12px_40px_rgba(20,20,18,0.06)] md:self-auto" style={d(420)}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/clinic/founder.jpg" alt="Marijus Dovydaitis, founder of Daygo" className="h-24 w-20 rounded-lg object-cover" />
+          <img src="/clinic/founder.jpg" alt={c.founderAlt} className="h-24 w-20 rounded-lg object-cover" />
           <div className="flex flex-col gap-1.5 pr-2">
-            <p className="text-sm font-medium">Run a clinic? Talk with Marijus</p>
-            <p className="text-[10px] uppercase tracking-[0.15em] text-black/55">Founder of Daygo</p>
+            <p className="text-sm font-medium">{c.founderLine}</p>
+            <p className="text-[10px] uppercase tracking-[0.15em] text-black/55">{c.founderRole}</p>
             <a href={DEMO} target="_blank" rel="noopener noreferrer" className="mt-1.5 flex w-fit items-center gap-1 rounded-full px-4 py-2 text-xs font-medium text-white hover:opacity-85" style={{ background: INK }}>
-              Book a 30-min call <ChevronRight size={14} />
+              {c.bookCall} <ChevronRight size={14} />
             </a>
           </div>
         </div>

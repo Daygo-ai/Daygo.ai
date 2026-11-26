@@ -29,7 +29,8 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en">
+    // lang is switched to "lt" on /lt pages by HtmlLang before hydration
+    <html lang="en" suppressHydrationWarning>
       <body>
         {children}
         <Analytics />

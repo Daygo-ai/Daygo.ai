@@ -1,10 +1,13 @@
 import Link from "next/link";
 import Image from "next/image";
 import { BONE, NAV_LINKS } from "@/lib/brand";
+import { localePath, type Lang } from "@/lib/i18n";
 
 const CONTACTS = ["hello@daygo.ai", "support@daygo.ai", "privacy@daygo.ai"];
 
-export function Footer() {
+export function Footer({ lang = "en" }: { lang?: Lang }) {
+  const lt = lang === "lt";
+  const L = (p: string) => localePath(lang, p);
   return (
     <footer style={{ background: BONE }} className="px-6 py-12 text-black md:px-10">
       <div className="mx-auto max-w-6xl">
@@ -15,30 +18,30 @@ export function Footer() {
               <Image src="/daygo-wordmark.webp" alt="Daygo" width={2000} height={302} className="h-[18px] w-auto invert" />
             </div>
             <p className="mt-3 font-mono text-[10px] uppercase leading-relaxed tracking-widest text-black/50">
-              A healthier tomorrow, today.
+              {lt ? "Sveikesnis rytojus jau šiandien." : "A healthier tomorrow, today."}
             </p>
             <p className="mt-4 max-w-xs text-[13px] leading-relaxed text-black/55">
-              Built with care. Not a medical device.
+              {lt ? "Sukurta su rūpesčiu. Tai ne medicinos priemonė." : "Built with care. Not a medical device."}
             </p>
           </div>
 
-          <FooterCol title="Product">
+          <FooterCol title={lt ? "Produktas" : "Product"}>
             {NAV_LINKS.map((l) => (
-              <FooterLink key={l.href} href={l.href}>
-                {l.label}
+              <FooterLink key={l.href} href={L(l.href)}>
+                {lt ? l.lt : l.label}
               </FooterLink>
             ))}
-            <FooterLink href="/clinic">Clinic sign in</FooterLink>
+            <FooterLink href="/clinic">{lt ? "Klinikos prisijungimas" : "Clinic sign in"}</FooterLink>
           </FooterCol>
 
-          <FooterCol title="Legal">
-            <FooterLink href="/privacy">Privacy</FooterLink>
-            <FooterLink href="/terms">Terms</FooterLink>
-            <FooterLink href="/support">Support</FooterLink>
-            <FooterLink href="/labs">Lab markers</FooterLink>
+          <FooterCol title={lt ? "Teisinė informacija" : "Legal"}>
+            <FooterLink href={L("/privacy")}>{lt ? "Privatumas" : "Privacy"}</FooterLink>
+            <FooterLink href={L("/terms")}>{lt ? "Sąlygos" : "Terms"}</FooterLink>
+            <FooterLink href={L("/support")}>{lt ? "Pagalba" : "Support"}</FooterLink>
+            <FooterLink href="/labs">{lt ? "Tyrimų rodikliai (EN)" : "Lab markers"}</FooterLink>
           </FooterCol>
 
-          <FooterCol title="Reach us">
+          <FooterCol title={lt ? "Susisiekite" : "Reach us"}>
             {CONTACTS.map((email) => (
               <li key={email}>
                 <a href={`mailto:${email}`} className="text-black/70 transition hover:text-black">
@@ -51,7 +54,7 @@ export function Footer() {
 
         <div className="mt-12 flex flex-col gap-4 border-t border-black/10 pt-6 sm:flex-row sm:items-center sm:justify-between">
           <span className="font-mono text-[10px] tracking-wider text-black/45">
-            © {new Date().getFullYear()} Daygo. All rights reserved.
+            © {new Date().getFullYear()} Daygo. {lt ? "Visos teisės saugomos." : "All rights reserved."}
           </span>
           <div className="flex items-center gap-5 text-black/65">
             <XMark className="h-4 w-4" />

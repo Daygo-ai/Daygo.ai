@@ -98,8 +98,17 @@ export async function loadRetention(users: User[], subscribed: Set<string>) {
     ["Subscribed", subscribed.size],
   ];
 
-  const sessions = new Set(recent.filter((e) => e.event === "app_open").map((e) => `${e.user_id}`)).size;
+  // Per person: last day seen and how many days active (for the users table).
+  const lastActive: Record<string, string> = {};
+  const daysActive: Record<string, number> = {};
+  for (const [uid, s] of activeDays) {
+    lastActive[uid] = new Date(Math.max(...s) * DAY).toISOString();
+    daysActive[uid] = s.size;
+  }
   return {
+    lastActive,
+    daysActive,
+    withPush: [...withPush],
     since: events[0]?.created_at ?? null,
     dau, wau, mau,
     stickiness: mau ? Math.round((dau / mau) * 100) : 0,
@@ -109,6 +118,5 @@ export async function loadRetention(users: User[], subscribed: Set<string>) {
     cohortRows,
     usageRows,
     funnel,
-    sessions,
   };
 }

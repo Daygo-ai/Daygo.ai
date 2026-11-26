@@ -133,10 +133,29 @@ function formatSubscriptionStatus(sub: { product_id: string; status: string } | 
   return `${plan} — ${statusLabel[sub.status] ?? sub.status}`;
 }
 
-export default async function AdminPage() {
+const TABS = [
+  ["overview", "Overview"],
+  ["users", "Users"],
+  ["retention", "Retention"],
+  ["money", "Money"],
+  ["ai", "AI costs"],
+  ["notify", "Notifications"],
+] as const;
+type Tab = (typeof TABS)[number][0];
+
+const fmtDate = (iso: string | null | undefined) => (iso ? new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "—");
+const ago = (iso: string | null | undefined) => {
+  if (!iso) return "never";
+  const d = Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000);
+  return d <= 0 ? "today" : d === 1 ? "yesterday" : `${d} days ago`;
+};
+
+export default async function AdminPage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
   if (!(await isAuthed())) {
     return <LoginForm />;
   }
+  const requested = (await searchParams).tab;
+  const tab: Tab = (TABS.find(([k]) => k === requested)?.[0] ?? "overview") as Tab;
 
   const [users, usage, manualGrants, freeMessageConfig, broadcasts, subscriptionByUser] = await Promise.all([
     listAllUsers(),
@@ -147,255 +166,274 @@ export default async function AdminPage() {
     loadSubscriptions(),
   ]);
 
+  const DAY = 86_400_000;
   const now = Date.now();
-  const DAY = 24 * 60 * 60 * 1000;
-  const activeSince = (ms: number) => {
-    const cutoff = now - ms;
-    const set = new Set<string>();
-    for (const row of usage) {
-      if (new Date(row.created_at).getTime() >= cutoff) set.add(row.user_id);
-    }
-    return set.size;
-  };
-  const dau = activeSince(DAY);
-  const wau = activeSince(7 * DAY);
-  const mau = activeSince(30 * DAY);
-
-  const perUser = new Map<string, { calls: number; inputTokens: number; outputTokens: number }>();
-  for (const row of usage) {
-    const entry = perUser.get(row.user_id) ?? { calls: 0, inputTokens: 0, outputTokens: 0 };
-    entry.calls += 1;
-    entry.inputTokens += row.input_tokens;
-    entry.outputTokens += row.output_tokens;
-    perUser.set(row.user_id, entry);
-  }
-
   const emailById = new Map(users.map((u) => [u.id, u.email]));
-  const spendRows = [...perUser.entries()]
-    .map(([userId, stats]) => ({
-      userId,
-      email: emailById.get(userId) ?? "(unknown)",
-      ...stats,
-      cost: estimateCost(stats.inputTokens, stats.outputTokens),
-    }))
-    .sort((a, b) => b.cost - a.cost);
 
-  const totalCost = spendRows.reduce((sum, r) => sum + r.cost, 0);
+  // ── AI costs ──
+  const sumBy = (key: (r: (typeof usage)[number]) => string, sinceMs = 90 * DAY) => {
+    const m = new Map<string, { calls: number; inputTokens: number; outputTokens: number }>();
+    for (const r of usage) {
+      if (now - new Date(r.created_at).getTime() > sinceMs) continue;
+      const e = m.get(key(r)) ?? { calls: 0, inputTokens: 0, outputTokens: 0 };
+      e.calls++; e.inputTokens += r.input_tokens; e.outputTokens += r.output_tokens;
+      m.set(key(r), e);
+    }
+    return [...m.entries()].map(([k, v]) => ({ key: k, ...v, cost: estimateCost(v.inputTokens, v.outputTokens) })).sort((a, b) => b.cost - a.cost);
+  };
+  const spendByUser = sumBy((r) => r.user_id);
+  const spendBySource = sumBy((r) => r.source);
+  const cost90 = spendByUser.reduce((s, r) => s + r.cost, 0);
+  const cost30 = sumBy((r) => r.user_id, 30 * DAY).reduce((s, r) => s + r.cost, 0);
+  const costByUser = new Map(spendByUser.map((r) => [r.key, r.cost]));
 
-  const perSource = new Map<string, { calls: number; inputTokens: number; outputTokens: number }>();
-  for (const row of usage) {
-    const entry = perSource.get(row.source) ?? { calls: 0, inputTokens: 0, outputTokens: 0 };
-    entry.calls += 1;
-    entry.inputTokens += row.input_tokens;
-    entry.outputTokens += row.output_tokens;
-    perSource.set(row.source, entry);
+  // ── Money ──
+  const subs = [...subscriptionByUser.values()];
+  const activeStatuses = new Set(["active", "active_will_not_renew", "in_grace_period", "in_billing_retry"]);
+  const activeSubs = subs.filter((s) => activeStatuses.has(s.status));
+  const everSubscribed = users.filter((u) => subscriptionByUser.has(u.id)).length;
+  const conversion = users.length ? (everSubscribed / users.length) * 100 : 0;
+  const planCounts = new Map<string, number>();
+  for (const s of subs) {
+    const k = formatSubscriptionStatus(s);
+    planCounts.set(k, (planCounts.get(k) ?? 0) + 1);
   }
-  const sourceRows = [...perSource.entries()]
-    .map(([source, stats]) => ({ source, ...stats, cost: estimateCost(stats.inputTokens, stats.outputTokens) }))
-    .sort((a, b) => b.cost - a.cost);
 
-  const registered = [...users].sort(
-    (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
-  );
-
-  // "Ever subscribed" — anyone with a row at all, regardless of current
-  // status (active, expired, refunded...) — is the real conversion
-  // signal: they crossed from free to paying at least once. This is
-  // exactly the number the free-message experiment is meant to move.
-  const everSubscribedCount = users.filter((u) => subscriptionByUser.has(u.id)).length;
+  // ── Retention + per-user activity ──
   const retention = await loadRetention(users, new Set(users.filter((u) => subscriptionByUser.has(u.id)).map((u) => u.id)));
-  const rate = (r: { pct: number; back: number; of: number } | null) => (r ? `${r.pct}% (${r.back}/${r.of})` : "not enough data");
-  const conversionRate = users.length > 0 ? (everSubscribedCount / users.length) * 100 : 0;
+  const rate = (r: { pct: number; back: number; of: number } | null) => (r ? `${r.pct}%  (${r.back} of ${r.of})` : "not enough data yet");
+  const pushOn = new Set(retention.withPush);
+  const newThisWeek = users.filter((u) => now - new Date(u.created_at).getTime() < 7 * DAY).length;
 
-  const grantRows = manualGrants.map((g) => ({
-    userId: g.user_id,
-    email: emailById.get(g.user_id) ?? "(unknown)",
-    grantedAt: g.granted_at,
-  }));
+  const registered = [...users].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  const grantRows = manualGrants.map((g) => ({ userId: g.user_id, email: emailById.get(g.user_id) ?? "(unknown)", grantedAt: g.granted_at }));
 
   return (
-    <div
-      style={{
-        // Forces native form controls (input/select) to always render
-        // light — without this, a browser in dark mode auto-restyles
-        // their text/background independently of our own inline styles,
-        // which is exactly what made "10" and "Never" nearly invisible.
-        colorScheme: "light",
-        width: "100%",
-        padding: "32px 40px",
-        fontFamily: "system-ui, sans-serif",
-        background: "#fff",
-        color: "#111",
-        minHeight: "100vh",
-        boxSizing: "border-box",
-      }}
-    >
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-        <h1 style={{ fontSize: 22, fontWeight: 600 }}>Daygo admin</h1>
-        <form action={logout}>
-          <button type="submit" style={{ fontSize: 13, background: "none", border: "none", color: "#666", cursor: "pointer" }}>
-            Sign out
-          </button>
-        </form>
-      </div>
-
-      <section style={{ display: "flex", gap: 16, margin: "24px 0" }}>
-        <Stat label="DAU" value={dau} />
-        <Stat label="WAU" value={wau} />
-        <Stat label="MAU" value={mau} />
-        <Stat label="Registered users" value={users.length} />
-        <Stat label="Ever subscribed" value={everSubscribedCount} />
-        <Stat label="Conversion rate" value={`${conversionRate.toFixed(1)}%`} />
-        <Stat label="Est. AI spend (90d)" value={`$${totalCost.toFixed(2)}`} />
-      </section>
-
-      <Section
-        title="Retention"
-        description={
-          `From the app's own activity events${retention.since ? `, tracked since ${new Date(retention.since).toLocaleDateString("en-GB")}` : " — none yet; they start arriving once people open the updated app"}. ` +
-          "Active means the person opened the app or did something in it. Return rates count people who were back in that window after signing up."
-        }
-      >
-        <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
-          <Stat label="Active today" value={retention.dau} />
-          <Stat label="Active 7 days" value={retention.wau} />
-          <Stat label="Active 30 days" value={retention.mau} />
-          <Stat label="Stickiness (DAU/MAU)" value={`${retention.stickiness}%`} />
+    <div style={{ colorScheme: "light", minHeight: "100vh", background: "#f6f6f4", color: "#111", fontFamily: "system-ui, -apple-system, sans-serif" }}>
+      {/* header + tabs */}
+      <header style={{ background: "#fff", borderBottom: "1px solid #e8e8e4", position: "sticky", top: 0, zIndex: 5 }}>
+        <div style={{ maxWidth: 1180, margin: "0 auto", padding: "16px 24px 0", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div style={{ fontSize: 18, fontWeight: 700, letterSpacing: "-0.01em" }}>Daygo admin</div>
+          <form action={logout}>
+            <button type="submit" style={{ fontSize: 13, background: "none", border: "none", color: "#777", cursor: "pointer" }}>Sign out</button>
+          </form>
         </div>
-        <Table
-          columns={["Came back", "Rate"]}
-          rows={[
-            ["Next day (day 1)", rate(retention.d1)],
-            ["Second week (days 7–13)", rate(retention.d7)],
-            ["After a month (days 30–36)", rate(retention.d30)],
-          ]}
-        />
-        <div style={{ fontSize: 12, color: "#666", marginTop: 18 }}>Weekly cohorts: share of each sign-up week active in week 0, 1, 2, 3</div>
-        <Table columns={["Signed up week of", "People", "Week 0", "Week 1", "Week 2", "Week 3"]} rows={retention.cohortRows} />
-        <div style={{ fontSize: 12, color: "#666", marginTop: 18 }}>Funnel</div>
-        <Table
-          columns={["Step", "People", "Of signed up"]}
-          rows={retention.funnel.map(([k, n]) => [k, n, `${retention.funnel[0][1] ? Math.round((n / retention.funnel[0][1]) * 100) : 0}%`])}
-        />
-        <div style={{ fontSize: 12, color: "#666", marginTop: 18 }}>What people use (last 30 days)</div>
-        <Table columns={["Action", "People", "Times"]} rows={retention.usageRows.length ? retention.usageRows : [["No events yet", 0, 0]]} />
-      </Section>
+        <nav style={{ maxWidth: 1180, margin: "0 auto", padding: "0 24px", display: "flex", gap: 4, overflowX: "auto" }}>
+          {TABS.map(([k, label]) => (
+            <a
+              key={k}
+              href={`/admin?tab=${k}`}
+              style={{
+                padding: "12px 14px",
+                fontSize: 14,
+                fontWeight: tab === k ? 600 : 500,
+                color: tab === k ? "#111" : "#777",
+                textDecoration: "none",
+                borderBottom: tab === k ? "2px solid #111" : "2px solid transparent",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {label}
+            </a>
+          ))}
+        </nav>
+      </header>
 
-      <Section
-        title="Send a notification"
-        description="Announce an update or a new feature. Send a test to your own account first; it arrives like any other Daygo notification."
-      >
-        <Broadcast reach={broadcasts.reach} />
-        {broadcasts.history.length ? (
-          <div style={{ marginTop: 20 }}>
-            <div style={{ fontSize: 12, color: "#666", marginBottom: 6 }}>Sent recently</div>
-            {broadcasts.history.map((b) => (
-              <div key={b.created_at} style={{ fontSize: 13, padding: "6px 0", borderTop: "1px solid #eee" }}>
-                <b>{b.title}</b> — {b.body}
-                <div style={{ color: "#888", fontSize: 12 }}>
-                  {new Date(b.created_at).toLocaleString("en-GB")} · {b.audience === "everyone" ? "everyone" : "test"} ·{" "}
-                  {b.failure ? `not delivered (${b.failure})` : `delivered to ${b.delivered} of ${b.devices}`}
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : null}
-      </Section>
+      <main style={{ maxWidth: 1180, margin: "0 auto", padding: "24px" }}>
+        {tab === "overview" && (
+          <>
+            <Group title="Growth">
+              <Stat label="Registered users" value={users.length} />
+              <Stat label="New this week" value={newThisWeek} />
+              <Stat label="Notifications on" value={pushOn.size} hint="can receive pushes" />
+            </Group>
+            <Group title="Engagement" note={retention.since ? `app events since ${fmtDate(retention.since)}` : "app events start with the next app release"}>
+              <Stat label="Active today" value={retention.dau} />
+              <Stat label="Active 7 days" value={retention.wau} />
+              <Stat label="Active 30 days" value={retention.mau} />
+              <Stat label="Back on day 1" value={retention.d1 ? `${retention.d1.pct}%` : "—"} />
+              <Stat label="Back in week 2" value={retention.d7 ? `${retention.d7.pct}%` : "—"} />
+            </Group>
+            <Group title="Money">
+              <Stat label="Paying now" value={activeSubs.length} />
+              <Stat label="Ever subscribed" value={everSubscribed} />
+              <Stat label="Conversion" value={`${conversion.toFixed(1)}%`} hint="ever subscribed / registered" />
+              <Stat label="Pro grants" value={manualGrants.length} hint="free Pro you gave" />
+            </Group>
+            <Group title="Costs">
+              <Stat label="AI spend, 30 days" value={`$${cost30.toFixed(2)}`} />
+              <Stat label="AI spend, 90 days" value={`$${cost90.toFixed(2)}`} />
+            </Group>
+            <Card title="Funnel" description="How far people get, from sign-up to paying.">
+              <Funnel steps={retention.funnel} />
+            </Card>
+          </>
+        )}
 
-      <Section
-        title="Free chat messages (non-subscribers)"
-        description={
-          'How many messages someone can send before the hard paywall appears. "Never" resets means a one-time ' +
-          'taste of the product; "Every day" turns this into a real ongoing free tier — a bigger decision than ' +
-          "the number itself."
-        }
-      >
-        <FreeMessageConfig limit={freeMessageConfig.limit} mode={freeMessageConfig.mode} />
-      </Section>
+        {tab === "users" && (
+          <Card title={`Users (${users.length})`} description="Newest first. Last active comes from app events (newer app versions only).">
+            <Table
+              columns={["Name", "Email", "Signed up", "Last active", "Days active", "Notifications", "Plan", "AI cost (90d)"]}
+              rows={registered.slice(0, 300).map((u) => [
+                u.name ?? "—",
+                u.email ?? "(no email)",
+                fmtDate(u.created_at),
+                ago(retention.lastActive[u.id]),
+                retention.daysActive[u.id] ?? 0,
+                pushOn.has(u.id) ? "on" : "—",
+                formatSubscriptionStatus(subscriptionByUser.get(u.id)),
+                costByUser.has(u.id) ? `$${costByUser.get(u.id)!.toFixed(2)}` : "—",
+              ])}
+            />
+          </Card>
+        )}
 
-      <Section
-        title="Pro access grants"
-        description="Give someone free Pro (friends, family, support gestures) without a real purchase. Checked by the app alongside real subscriptions."
-      >
-        <ProGrants grants={grantRows} />
-      </Section>
+        {tab === "retention" && (
+          <>
+            <Group title="Active people" note={retention.since ? `tracked since ${fmtDate(retention.since)}` : "no app events yet"}>
+              <Stat label="Today" value={retention.dau} />
+              <Stat label="Last 7 days" value={retention.wau} />
+              <Stat label="Last 30 days" value={retention.mau} />
+              <Stat label="Stickiness" value={`${retention.stickiness}%`} hint="daily / monthly active" />
+            </Group>
+            <Card title="Do people come back?" description="Of people who signed up long enough ago, the share active again in each window.">
+              <Table
+                columns={["Window after sign-up", "Came back"]}
+                rows={[
+                  ["Next day (day 1)", rate(retention.d1)],
+                  ["Second week (days 7–13)", rate(retention.d7)],
+                  ["After a month (days 30–36)", rate(retention.d30)],
+                ]}
+              />
+            </Card>
+            <Card title="Weekly cohorts" description="Each row is a sign-up week; each column the share of that group active in the weeks after.">
+              <Table columns={["Signed up week of", "People", "Week 0", "Week 1", "Week 2", "Week 3"]} rows={retention.cohortRows.length ? retention.cohortRows : [["No sign-ups in the last 8 weeks", 0, "", "", "", ""]]} />
+            </Card>
+            <Card title="What people use" description="Last 30 days, by number of people.">
+              <Table columns={["Action", "People", "Times"]} rows={retention.usageRows.length ? retention.usageRows : [["No events yet", 0, 0]]} />
+            </Card>
+          </>
+        )}
 
-      <Section title="AI spend by feature (last 90 days)">
-        <Table
-          columns={["Source", "Calls", "Input tokens", "Output tokens", "Est. cost"]}
-          rows={sourceRows.map((r) => [
-            r.source,
-            r.calls.toLocaleString(),
-            r.inputTokens.toLocaleString(),
-            r.outputTokens.toLocaleString(),
-            `$${r.cost.toFixed(3)}`,
-          ])}
-        />
-      </Section>
+        {tab === "money" && (
+          <>
+            <Group title="Subscriptions">
+              <Stat label="Paying now" value={activeSubs.length} />
+              <Stat label="Ever subscribed" value={everSubscribed} />
+              <Stat label="Conversion" value={`${conversion.toFixed(1)}%`} />
+            </Group>
+            <Card title="By plan and status" description="Latest subscription per person.">
+              <Table columns={["Plan and status", "People"]} rows={planCounts.size ? [...planCounts.entries()].sort((a, b) => b[1] - a[1]) : [["No subscriptions yet", 0]]} />
+            </Card>
+            <Card
+              title="Free chat messages"
+              description='How many messages a non-subscriber can send before the paywall. "Never" resets = a one-time taste; "Every day" = an ongoing free tier.'
+            >
+              <FreeMessageConfig limit={freeMessageConfig.limit} mode={freeMessageConfig.mode} />
+            </Card>
+            <Card title="Free Pro access" description="Give someone Pro without a purchase (friends, testers, support). The app treats it like a real subscription.">
+              <ProGrants grants={grantRows} />
+            </Card>
+          </>
+        )}
 
-      <Section title="AI spend by user (last 90 days)">
-        <Table
-          columns={["Email", "Calls", "Input tokens", "Output tokens", "Est. cost"]}
-          rows={spendRows.slice(0, 100).map((r) => [
-            r.email,
-            r.calls.toLocaleString(),
-            r.inputTokens.toLocaleString(),
-            r.outputTokens.toLocaleString(),
-            `$${r.cost.toFixed(3)}`,
-          ])}
-        />
-      </Section>
+        {tab === "ai" && (
+          <>
+            <Group title="Estimated AI spend" note="estimate from token counts, not a bill">
+              <Stat label="Last 30 days" value={`$${cost30.toFixed(2)}`} />
+              <Stat label="Last 90 days" value={`$${cost90.toFixed(2)}`} />
+              <Stat label="Per active person (30d)" value={retention.mau ? `$${(cost30 / retention.mau).toFixed(2)}` : "—"} />
+            </Group>
+            <Card title="By feature (90 days)">
+              <Table
+                columns={["Feature", "Calls", "Input tokens", "Output tokens", "Est. cost"]}
+                rows={spendBySource.map((r) => [r.key, r.calls.toLocaleString(), r.inputTokens.toLocaleString(), r.outputTokens.toLocaleString(), `$${r.cost.toFixed(3)}`])}
+              />
+            </Card>
+            <Card title="By person (90 days)" description="Top 100.">
+              <Table
+                columns={["Email", "Calls", "Input tokens", "Output tokens", "Est. cost"]}
+                rows={spendByUser.slice(0, 100).map((r) => [emailById.get(r.key) ?? "(unknown)", r.calls.toLocaleString(), r.inputTokens.toLocaleString(), r.outputTokens.toLocaleString(), `$${r.cost.toFixed(3)}`])}
+              />
+            </Card>
+          </>
+        )}
 
-      <Section title="Registered users">
-        <Table
-          columns={["Name", "Email", "Subscription", "Registered"]}
-          rows={registered.slice(0, 200).map((u) => [
-            u.name ?? "—",
-            u.email ?? "(no email)",
-            formatSubscriptionStatus(subscriptionByUser.get(u.id)),
-            new Date(u.created_at).toLocaleString(),
-          ])}
-        />
-      </Section>
+        {tab === "notify" && (
+          <>
+            <Card title="Send a notification" description="Announce an update or a new feature. Send a test to your own account first; it arrives like any other Daygo notification.">
+              <Broadcast reach={broadcasts.reach} />
+            </Card>
+            <Card title="Sent recently">
+              <Table
+                columns={["When", "Title", "Message", "Audience", "Result"]}
+                rows={
+                  broadcasts.history.length
+                    ? broadcasts.history.map((b) => [
+                        new Date(b.created_at).toLocaleString("en-GB"),
+                        b.title,
+                        b.body,
+                        b.audience === "everyone" ? "Everyone" : "Test",
+                        b.failure ? `Not delivered (${b.failure})` : `Delivered ${b.delivered} of ${b.devices}`,
+                      ])
+                    : [["Nothing sent yet", "", "", "", ""]]
+                }
+              />
+            </Card>
+          </>
+        )}
+      </main>
     </div>
   );
 }
 
-function Section({
-  title,
-  description,
-  children,
-}: {
-  title: string;
-  description?: string;
-  children: React.ReactNode;
-}) {
+function Group({ title, note, children }: { title: string; note?: string; children: React.ReactNode }) {
   return (
-    <section
-      style={{
-        marginTop: 28,
-        padding: 20,
-        border: "1px solid #e5e5e5",
-        borderRadius: 12,
-        background: "#fafafa",
-      }}
-    >
+    <section style={{ marginBottom: 24 }}>
+      <div style={{ display: "flex", gap: 10, alignItems: "baseline", marginBottom: 10 }}>
+        <h2 style={{ fontSize: 13, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", color: "#555", margin: 0 }}>{title}</h2>
+        {note ? <span style={{ fontSize: 12, color: "#999" }}>{note}</span> : null}
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(170px, 1fr))", gap: 12 }}>{children}</div>
+    </section>
+  );
+}
+
+function Card({ title, description, children }: { title: string; description?: string; children: React.ReactNode }) {
+  return (
+    <section style={{ marginBottom: 20, padding: 20, border: "1px solid #e8e8e4", borderRadius: 14, background: "#fff" }}>
       <h2 style={{ fontSize: 16, fontWeight: 600, margin: 0 }}>{title}</h2>
-      {description ? (
-        <p style={{ fontSize: 13, color: "#666", marginTop: 6, marginBottom: 14 }}>{description}</p>
-      ) : (
-        <div style={{ marginTop: 14 }} />
-      )}
+      {description ? <p style={{ fontSize: 13, color: "#777", margin: "6px 0 12px" }}>{description}</p> : <div style={{ height: 10 }} />}
       {children}
     </section>
   );
 }
 
-function Stat({ label, value }: { label: string; value: string | number }) {
+function Stat({ label, value, hint }: { label: string; value: string | number; hint?: string }) {
   return (
-    <div style={{ padding: "12px 16px", border: "1px solid #eee", borderRadius: 10, minWidth: 110 }}>
-      <div style={{ fontSize: 22, fontWeight: 700 }}>{value}</div>
-      <div style={{ fontSize: 12, color: "#666" }}>{label}</div>
+    <div style={{ padding: "14px 16px", border: "1px solid #e8e8e4", borderRadius: 12, background: "#fff" }}>
+      <div style={{ fontSize: 26, fontWeight: 700, letterSpacing: "-0.02em" }}>{value}</div>
+      <div style={{ fontSize: 13, color: "#555", marginTop: 2 }}>{label}</div>
+      {hint ? <div style={{ fontSize: 11, color: "#999", marginTop: 2 }}>{hint}</div> : null}
+    </div>
+  );
+}
+
+function Funnel({ steps }: { steps: [string, number][] }) {
+  const top = steps[0]?.[1] || 1;
+  return (
+    <div style={{ display: "grid", gap: 8 }}>
+      {steps.map(([label, n]) => (
+        <div key={label} style={{ display: "grid", gridTemplateColumns: "200px 1fr 90px", gap: 12, alignItems: "center", fontSize: 13 }}>
+          <span>{label}</span>
+          <div style={{ background: "#f0f0ec", borderRadius: 6, height: 14, overflow: "hidden" }}>
+            <div style={{ width: `${Math.max(2, (n / top) * 100)}%`, height: "100%", background: "#CDEE3C" }} />
+          </div>
+          <span style={{ textAlign: "right", color: "#555" }}>
+            {n} · {Math.round((n / top) * 100)}%
+          </span>
+        </div>
+      ))}
     </div>
   );
 }
@@ -403,11 +441,11 @@ function Stat({ label, value }: { label: string; value: string | number }) {
 function Table({ columns, rows }: { columns: string[]; rows: (string | number)[][] }) {
   return (
     <div style={{ overflowX: "auto" }}>
-      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, marginTop: 8 }}>
+      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
         <thead>
           <tr>
             {columns.map((c) => (
-              <th key={c} style={{ textAlign: "left", borderBottom: "1px solid #eee", padding: "6px 8px", color: "#666" }}>
+              <th key={c} style={{ textAlign: "left", borderBottom: "1px solid #eee", padding: "8px 10px", color: "#777", fontWeight: 500, whiteSpace: "nowrap" }}>
                 {c}
               </th>
             ))}
@@ -417,7 +455,7 @@ function Table({ columns, rows }: { columns: string[]; rows: (string | number)[]
           {rows.map((row, i) => (
             <tr key={i}>
               {row.map((cell, j) => (
-                <td key={j} style={{ borderBottom: "1px solid #f5f5f5", padding: "6px 8px" }}>
+                <td key={j} style={{ borderBottom: "1px solid #f4f4f2", padding: "8px 10px", verticalAlign: "top" }}>
                   {cell}
                 </td>
               ))}

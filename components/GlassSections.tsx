@@ -335,7 +335,14 @@ function ClinicInsight({ lang }: { lang: Lang }) {
       <p
         aria-hidden
         className={`${bodoni.className} pointer-events-none absolute bottom-[-0.08em] right-6 z-10 hidden select-none uppercase leading-none text-white md:block`}
-        style={{ fontSize: "clamp(4.5rem, 8.5vw, 8.5rem)" }}
+        style={{
+          // sized for the 7-letter "Clinics"; longer words shrink to stay inside the photo half
+          fontSize: (() => {
+            const n = c.clinicsWord.length;
+            const k = n <= 7 ? 1 : (7 / n) * 0.92;
+            return `clamp(${(4.5 * k).toFixed(2)}rem, ${(8.5 * k).toFixed(2)}vw, ${(8.5 * k).toFixed(2)}rem)`;
+          })(),
+        }}
       >
         {c.clinicsWord}
       </p>

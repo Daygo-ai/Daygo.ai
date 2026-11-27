@@ -145,7 +145,10 @@ function ClinicMockup({ lang }: { lang: Lang }) {
       const v = vid.current;
       if (v && v.duration) {
         const time = Math.round(Math.min(1, k / 0.48) * (v.duration - 0.05) * 30) / 30; // whole frames only
-        if (time !== last.time) { v.currentTime = time; last.time = time; }
+        // Only one seek at a time: piling seeks up while one is pending is
+        // what made fast scrolling choppy. The latest wanted frame is applied
+        // when the current seek finishes.
+        if (time !== last.time) { last.time = time; if (!v.seeking) v.currentTime = time; }
       }
       const inn = k > 0.5;
       if (inn !== last.inn) { box.current?.classList.toggle("gs-in", inn); last.inn = inn; }
@@ -173,6 +176,28 @@ function ClinicMockup({ lang }: { lang: Lang }) {
       v0.play().then(() => v0.pause()).catch(() => {});
     };
     v0?.addEventListener("loadedmetadata", read);
+    const catchUp = () => { if (v0 && last.time >= 0 && Math.abs(v0.currentTime - last.time) > 0.001) v0.currentTime = last.time; };
+    v0?.addEventListener("seeked", catchUp);
+    // Load the whole video into memory before the scene is reached, so
+    // scrubbing never waits on the network for a part not streamed yet.
+    let blobUrl = "";
+    let loading = false;
+    const preload = () => {
+      const t = track.current;
+      if (loading || !t || !v0 || t.getBoundingClientRect().top > window.innerHeight * 3) return;
+      loading = true;
+      fetch(v0.currentSrc || v0.src).then((r) => (r.ok ? r.blob() : Promise.reject()))
+        .then((b) => {
+          blobUrl = URL.createObjectURL(b);
+          const at = v0.currentTime;
+          v0.src = blobUrl;
+          v0.addEventListener("loadedmetadata", () => { v0.currentTime = last.time >= 0 ? last.time : at; read(); }, { once: true });
+          prime();
+        })
+        .catch(() => { /* keep streaming the original file */ });
+    };
+    window.addEventListener("scroll", preload, { passive: true });
+    preload();
     prime();
     window.addEventListener("touchstart", prime, { passive: true });
     read();
@@ -181,6 +206,9 @@ function ClinicMockup({ lang }: { lang: Lang }) {
     return () => {
       cancelAnimationFrame(raf);
       v0?.removeEventListener("loadedmetadata", read);
+      v0?.removeEventListener("seeked", catchUp);
+      window.removeEventListener("scroll", preload);
+      if (blobUrl) URL.revokeObjectURL(blobUrl);
       window.removeEventListener("touchstart", prime);
       window.removeEventListener("scroll", read);
       window.removeEventListener("resize", read);

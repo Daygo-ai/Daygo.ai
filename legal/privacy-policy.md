@@ -21,7 +21,7 @@ Daygo is a personal wellbeing app. This policy explains what personal data Daygo
 - You grant this permission explicitly, per data type, and can revoke it at any time in iOS Settings → Privacy & Security → Health.
 - **Health sync is your choice.** Daygo asks during setup, and you can change it any time in Settings → Privacy → Sync health data. It is **off unless you turn it on**.
   - **Off:** Apple Health data stays on your device. Only the specific values needed for an AI reply you ask for are sent to Anthropic's Claude API (see section 3).
-  - **On:** your Apple Health data (sleep, heart rate variability, resting heart rate, workouts, activity), your logs and your lab values are backed up to our Supabase database (EU), linked to your account. This lets your coach, morning brief, weekly summary and pattern detection use your history, and lets a clinic you have joined see what you chose to share with it.
+  - **On:** your Apple Health data (sleep, heart rate variability, resting heart rate, workouts, activity), your logs (and your lab values, only if you also share blood tests with a clinic) are backed up to our Supabase database (EU), linked to your account. This lets your coach, morning brief, weekly summary and pattern detection use your history, and lets a clinic you have joined see what you chose to share with it.
   - Turning it off stops new uploads. To also remove what was already uploaded, delete your account or email privacy@daygo.ai.
 - We never use HealthKit data for advertising, and we never sell or share it with data brokers.
 
@@ -78,7 +78,7 @@ Daygo's coach is an AI, not a person and not a clinician.
 ## 4. Where your data lives
 
 - **On your device** by default (SwiftData, Keychain).
-- **In our Supabase project** when you're signed in: profile, daily verdicts, journals, weekly intents, what the coach remembers, your consent choices, Garmin, Oura or WHOOP data if you connected them, and your Apple Health data, logs and lab values if health sync is on. Storage is in the EU (AWS `eu-west-1`, Ireland).
+- **In our Supabase project** when you're signed in: profile, daily verdicts, journals, weekly intents, what the coach remembers, your consent choices, Garmin, Oura or WHOOP data if you connected them, and your Apple Health data and logs if health sync is on (lab values only if you also share blood tests with a clinic). Storage is in the EU (AWS `eu-west-1`, Ireland).
 - **In transit** to and from Anthropic's API for AI features. Anthropic stores prompt data per their commercial agreement and does not train on it.
 - **Apple Health data** stays on your device unless you turn on health sync (see section 2.2).
 

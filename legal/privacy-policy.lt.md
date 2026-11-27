@@ -23,7 +23,7 @@ Daygo yra asmeninės savijautos programėlė. Šioje politikoje paaiškinama, ko
 - Šį leidimą suteikiate aiškiai, kiekvienam duomenų tipui atskirai, ir galite bet kada jį atšaukti iOS nustatymuose → Privatumas ir saugumas → Sveikata.
 - **Sveikatos duomenų sinchronizavimas – jūsų pasirinkimas.** Daygo apie tai paklausia pradedant naudotis, o pakeisti galite bet kada nustatymuose → Privatumas → Sinchronizuoti sveikatos duomenis. Jis **išjungtas, kol patys jo neįjungiate**.
   - **Išjungus:** Apple Health duomenys lieka jūsų įrenginyje. Į Anthropic Claude API siunčiamos tik konkrečios reikšmės, reikalingos jūsų paprašytam DI atsakymui (žr. 3 skyrių).
-  - **Įjungus:** jūsų Apple Health duomenys (miegas, širdies ritmo variabilumas, ramybės pulsas, treniruotės, aktyvumas), įrašai ir tyrimų rodikliai saugomi mūsų Supabase duomenų bazėje (ES), susieti su jūsų paskyra. Taip treneris, rytinė apžvalga, savaitės suvestinė ir dėsningumų paieška gali naudoti jūsų istoriją, o klinika, prie kurios prisijungėte, gali matyti tai, kuo pasirinkote su ja dalintis.
+  - **Įjungus:** jūsų Apple Health duomenys (miegas, širdies ritmo variabilumas, ramybės pulsas, treniruotės, aktyvumas), įrašai (o tyrimų rodikliai – tik jei taip pat dalinatės kraujo tyrimais su klinika) saugomi mūsų Supabase duomenų bazėje (ES), susieti su jūsų paskyra. Taip treneris, rytinė apžvalga, savaitės suvestinė ir dėsningumų paieška gali naudoti jūsų istoriją, o klinika, prie kurios prisijungėte, gali matyti tai, kuo pasirinkote su ja dalintis.
   - Išjungus sinchronizavimas sustabdomas. Jei norite ištrinti ir jau įkeltus duomenis, ištrinkite paskyrą arba parašykite privacy@daygo.ai.
 - HealthKit duomenų niekada nenaudojame reklamai ir niekada jų neparduodame bei neperduodame duomenų brokeriams.
 
@@ -80,7 +80,7 @@ Daygo treneris yra dirbtinis intelektas, o ne žmogus ir ne gydytojas.
 ## 4. Kur saugomi jūsų duomenys
 
 - **Jūsų įrenginyje** pagal numatytuosius nustatymus (SwiftData, Keychain).
-- **Mūsų Supabase projekte**, kai esate prisijungę: profilis, dienos įvertinimai, dienoraščiai, savaitės tikslai, tai, ką treneris prisimena, jūsų sutikimų pasirinkimai, Garmin, Oura ar WHOOP duomenys, jei juos prijungėte, ir jūsų Apple Health duomenys, įrašai bei tyrimų rodikliai, jei įjungtas sveikatos duomenų sinchronizavimas. Saugoma ES (AWS `eu-west-1`, Airija).
+- **Mūsų Supabase projekte**, kai esate prisijungę: profilis, dienos įvertinimai, dienoraščiai, savaitės tikslai, tai, ką treneris prisimena, jūsų sutikimų pasirinkimai, Garmin, Oura ar WHOOP duomenys, jei juos prijungėte, ir jūsų Apple Health duomenys bei įrašai, jei įjungtas sveikatos duomenų sinchronizavimas (tyrimų rodikliai – tik jei taip pat dalinatės kraujo tyrimais su klinika). Saugoma ES (AWS `eu-west-1`, Airija).
 - **Perdavimo metu** į Anthropic API ir iš jo – DI funkcijoms. Anthropic užklausų duomenis saugo pagal savo komercinę sutartį ir jais nemoko modelių.
 - **Apple Health duomenys** lieka jūsų įrenginyje, nebent įjungiate sveikatos duomenų sinchronizavimą (žr. 2.2 skyrių).
 

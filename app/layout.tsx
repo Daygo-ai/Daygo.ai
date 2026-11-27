@@ -16,7 +16,7 @@ export const metadata: Metadata = {
     url: "https://daygo.ai",
     siteName: "Daygo",
     type: "website",
-    images: [{ url: "/og.png", width: 1200, height: 630, alt: "Daygo — Between visits" }],
+    images: [{ url: "/og.png", width: 1200, height: 630, alt: "Daygo – Between visits" }],
   },
   twitter: {
     card: "summary_large_image",

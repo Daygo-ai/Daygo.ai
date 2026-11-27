@@ -12,7 +12,7 @@ export const metadata: Metadata = {
     siteName: "Daygo",
     type: "website",
     locale: "lt_LT",
-    images: [{ url: "/og.png", width: 1200, height: 630, alt: "Daygo — tarp vizitų" }],
+    images: [{ url: "/og.png", width: 1200, height: 630, alt: "Daygo – tarp vizitų" }],
   },
   twitter: {
     card: "summary_large_image",

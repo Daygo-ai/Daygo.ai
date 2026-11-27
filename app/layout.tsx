@@ -12,16 +12,18 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Daygo — Your health, between visits",
     description:
-      "An AI coach that remembers you, holds you accountable, and tells you what today actually needs.",
+      "Your watch, blood tests and how you feel in one app, and a clear view for your clinic between visits.",
     url: "https://daygo.ai",
     siteName: "Daygo",
     type: "website",
+    images: [{ url: "/og.png", width: 1200, height: 630, alt: "Daygo — Between visits" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "Daygo — Your health, between visits",
     description:
-      "An AI coach that remembers you, holds you accountable, and tells you what today actually needs.",
+      "Your watch, blood tests and how you feel in one app, and a clear view for your clinic between visits.",
+    images: ["/og.png"],
   },
 };
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { addDays, CLINICIAN_NAME as CLINICIAN, DEMO_PATIENTS, MARKERS, Patient, PROGRAMMES, Retest, TODAY, WATCH_OPTIONS } from "./data";
 import { avg, lastCheckIn, oneLine, sinceLastVisit, summarise } from "./summary";
 import { LabHistory, WholePicture } from "./charts";
@@ -11,7 +11,7 @@ import { setLiveContext } from "./data";
 import { DotColumns, RouteTerrain } from "./terrain";
 import { reportMeta, reportsOf, ReportTable, RangeFlag, toReview, UploadModal } from "./labs";
 import { ACCENT, liquid as apple, LiquidGlassDefs, GRAD, gradStyle, Icon, StatCard } from "./glass";
-import { AuditView, ExportButtons, MfaChallenge, InboxView, initLang, Lang, setLang, SettingsView, t, TeamView, useIdleSignOut, useInboxCount, VisitHistory } from "./extras";
+import { AuditView, ExportButtons, MfaChallenge, InboxView, initLang, Lang, setLang, SettingsView, t, TeamView, idleExpired, useIdleSignOut, useInboxCount, VisitHistory } from "./extras";
 import { AuraCurve, AuraPill, changePill, FrostBackground, glass, glassDark, iconBtn, pill, pillOn } from "./glass";
 
 type View = "today" | "patients" | "tests" | "add" | "inbox" | "team" | "settings" | "audit";
@@ -114,6 +114,26 @@ export default function ClinicApp() {
   useEffect(() => { if (loaded) try { localStorage.setItem("dgc_sidebar", collapsed ? "1" : "0"); } catch {} }, [collapsed, loaded]);
 
   const [mode, setMode] = useState<Mode>("loading");
+  const pidRef = useRef<string | null>(null);
+  useEffect(() => { pidRef.current = pid; }, [pid]);
+  // Security review M4: drop every chart from memory on sign-out, account
+  // change or lost authorisation.
+  const wipe = (msg?: string) => {
+    LIVE = null; setPatients([]); setPid(null); setPhonePid(null as any);
+    setMode("login"); if (msg) setToast(msg);
+  };
+  // Security review M5: the full chart is fetched (and audited) per patient.
+  const loadChart = async (id: string) => {
+    if (!LIVE) return;
+    try {
+      const full = await api<any>("patient", { clinic_id: LIVE.clinicId, patient_id: id, days: 90 });
+      setPatients((ps) => ps.map((p, i) => (p.id === id ? toPatient(full, i, LIVE!.me) : p)));
+    } catch (e) {
+      const st = (e as { status?: number }).status;
+      if (st === 401 || st === 403) wipe("Session ended. Please sign in again.");
+      else setToast(String((e as Error).message));
+    }
+  };
   const loadLive = async () => {
     try {
       // Two-factor: if this account has an authenticator, ask for the code first.
@@ -139,7 +159,12 @@ export default function ClinicApp() {
       try {
         const r = await api<{ patients: any[] }>("roster", { clinic_id: LIVE.clinicId, days: 90 });
         setPatients(r.patients.map((p, i) => toPatient(p, i, LIVE!.me)));
-      } catch { /* keep what we have */ }
+        if (pidRef.current) loadChart(pidRef.current);
+      } catch (e) {
+        const st = (e as { status?: number }).status;
+        if (st === 401 || st === 403) wipe("Session ended. Please sign in again.");
+        /* otherwise (network blip) keep what we have */
+      }
     };
     const t = setInterval(refresh, 60_000);
     window.addEventListener("focus", refresh);
@@ -152,8 +177,19 @@ export default function ClinicApp() {
   };
   useEffect(() => {
     if (showDemo() && new URLSearchParams(window.location.search).has("demo")) { startDemo(); setLoaded(true); return; }
-    sb().auth.getSession().then(({ data }) => { if (data.session) loadLive(); else setMode("login"); setLoaded(true); });
-    const { data: sub } = sb().auth.onAuthStateChange((ev) => { if (ev === "SIGNED_IN") loadLive(); });
+    sb().auth.getSession().then(async ({ data }) => {
+      // Security review M4: the idle deadline also applies across tab closure.
+      if (data.session && idleExpired()) { await sb().auth.signOut(); try { sessionStorage.setItem("dgc_timeout", "1"); } catch {} setMode("login"); setLoaded(true); return; }
+      if (data.session) loadLive(); else setMode("login"); setLoaded(true);
+    });
+    let lastUser: string | null = null;
+    const { data: sub } = sb().auth.onAuthStateChange((ev, session) => {
+      const u = session?.user?.id ?? null;
+      if (ev === "SIGNED_OUT") { wipe(); lastUser = null; return; }
+      if (lastUser && u && u !== lastUser) wipe();
+      if (u) lastUser = u;
+      if (ev === "SIGNED_IN") loadLive();
+    });
     return () => sub.subscription.unsubscribe();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -161,7 +197,7 @@ export default function ClinicApp() {
   useEffect(() => { if (!toast) return; const t = setTimeout(() => setToast(null), 2400); return () => clearTimeout(t); }, [toast]);
 
   const patch = (id: string, fn: (p: Patient) => Patient) => setPatients((ps) => ps.map((p) => (p.id === id ? fn(structuredClone(p)) : p)));
-  const open = (id: string) => { setPid(id); setView("patients"); setPhonePid(id); window.scrollTo({ top: 0 }); };
+  const open = (id: string) => { setPid(id); loadChart(id); setView("patients"); setPhonePid(id); window.scrollTo({ top: 0 }); };
   const remind = (p: Patient, what: string, marker?: string) => {
     if (!LIVE) { setToast(`Reminder sent to ${p.first}: ${what} (demo)`); return; }
     if (!p.id || !patients.some((x) => x.id === p.id)) { setToast("Open each patient to remind them individually"); return; }

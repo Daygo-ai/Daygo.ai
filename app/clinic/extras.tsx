@@ -43,12 +43,29 @@ export const t = (s: string) => (LANG === "lt" ? LT[s] ?? s : s);
 
 /* ───────────── SESSION TIMEOUT ───────────── */
 
+// Last activity + deadline are kept in localStorage so the inactivity limit
+// still applies after the tab was closed (security review M4).
+const LAST_KEY = "dgc_last_active", MIN_KEY = "dgc_timeout_min";
+
+/** True if the saved session sat idle past the clinic's deadline. */
+export function idleExpired(): boolean {
+  try {
+    const last = Number(localStorage.getItem(LAST_KEY) || 0);
+    const min = Number(localStorage.getItem(MIN_KEY) || 30);
+    return last > 0 && Date.now() - last > min * 60_000;
+  } catch { return false; }
+}
+
 /** Signs out after `minutes` without mouse/keyboard/touch activity (shared clinic computers). */
 export function useIdleSignOut(enabled: boolean, minutes: number) {
   useEffect(() => {
     if (!enabled) return;
     let timer: ReturnType<typeof setTimeout>;
+    let lastWrite = 0;
+    try { localStorage.setItem(MIN_KEY, String(minutes)); } catch {}
     const reset = () => {
+      const now = Date.now();
+      if (now - lastWrite > 5_000) { lastWrite = now; try { localStorage.setItem(LAST_KEY, String(now)); } catch {} }
       clearTimeout(timer);
       timer = setTimeout(async () => {
         try { sessionStorage.setItem("dgc_timeout", "1"); } catch {}

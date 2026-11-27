@@ -25,7 +25,7 @@ export async function api<T = any>(action: string, body: Record<string, unknown>
     body: JSON.stringify({ action, ...body }),
   });
   const j = await r.json().catch(() => ({}));
-  if (!r.ok) throw new Error(j.message ?? j.error ?? `Request failed (${r.status})`);
+  if (!r.ok) throw Object.assign(new Error(j.message ?? j.error ?? `Request failed (${r.status})`), { status: r.status });
   return j as T;
 }
 

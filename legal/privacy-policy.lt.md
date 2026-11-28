@@ -1,6 +1,6 @@
 # Daygo — Privatumo politika
 
-_Atnaujinta: 2026-11-27_
+_Atnaujinta: 2026-11-28_
 _Valdytojas: Marijus Dovydaitis („mes“, „mūsų“)_
 
 > Tai privatumo politikos vertimas į lietuvių kalbą. Jei vertimas ir [originalas anglų kalba](/privacy) nesutampa, vadovaujamasi originalu anglų kalba.
@@ -23,7 +23,7 @@ Daygo yra asmeninės savijautos programėlė. Šioje politikoje paaiškinama, ko
 - Šį leidimą suteikiate aiškiai, kiekvienam duomenų tipui atskirai, ir galite bet kada jį atšaukti iOS nustatymuose → Privatumas ir saugumas → Sveikata.
 - **Sveikatos duomenų sinchronizavimas – jūsų pasirinkimas.** Daygo apie tai paklausia pradedant naudotis, o pakeisti galite bet kada nustatymuose → Privatumas → Sinchronizuoti sveikatos duomenis. Jis **išjungtas, kol patys jo neįjungiate**.
   - **Išjungus:** Apple Health duomenys lieka jūsų įrenginyje. Į Anthropic Claude API siunčiamos tik konkrečios reikšmės, reikalingos jūsų paprašytam DI atsakymui (žr. 3 skyrių).
-  - **Įjungus:** jūsų Apple Health duomenys (miegas, širdies ritmo variabilumas, ramybės pulsas, treniruotės, aktyvumas), įrašai (o tyrimų rodikliai – tik jei taip pat dalinatės kraujo tyrimais su klinika) saugomi mūsų Supabase duomenų bazėje (ES), susieti su jūsų paskyra. Taip treneris, rytinė apžvalga, savaitės suvestinė ir dėsningumų paieška gali naudoti jūsų istoriją, o klinika, prie kurios prisijungėte, gali matyti tai, kuo pasirinkote su ja dalintis.
+  - **Įjungus:** jūsų Apple Health duomenys (miegas, širdies ritmo variabilumas, ramybės pulsas, treniruotės, aktyvumas), įrašai (o tyrimų rodikliai – tik jei taip pat dalinatės kraujo tyrimais su klinika) saugomi mūsų Supabase duomenų bazėje (ES), susieti su jūsų paskyra. Taip treneris, rytinė apžvalga, savaitės suvestinė ir dėsningumų paieška gali naudoti jūsų istoriją, o klinika, prie kurios prisijungėte, gali matyti tai, kuo pasirinkote su ja dalintis. Taip pat saugomi jūsų priminimai (pavadinimas, laikas, kartojimo dienos), kad jie sugrįžtų iš naujo įdiegus programėlę ir būtų vienodi visuose įrenginiuose. Kai ištrinate įrašą, tyrimo rodiklį ar priminimą, jis ištrinamas ir iš mūsų serverių; paliekame tik žymą, kad elementas su tuo ID buvo ištrintas (be turinio), kad sena kopija kitame įrenginyje jo nesugrąžintų.
   - Išjungus sinchronizavimas sustabdomas. Jei norite ištrinti ir jau įkeltus duomenis, ištrinkite paskyrą arba parašykite privacy@daygo.ai.
 - HealthKit duomenų niekada nenaudojame reklamai ir niekada jų neparduodame bei neperduodame duomenų brokeriams.
 

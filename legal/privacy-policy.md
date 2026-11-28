@@ -1,6 +1,6 @@
 # Daygo — Privacy Policy
 
-_Last updated: 2026-11-27_
+_Last updated: 2026-11-28_
 _Operator: Marijus Dovydaitis ("we", "our")_
 
 ## 1. What this policy covers
@@ -21,7 +21,7 @@ Daygo is a personal wellbeing app. This policy explains what personal data Daygo
 - You grant this permission explicitly, per data type, and can revoke it at any time in iOS Settings → Privacy & Security → Health.
 - **Health sync is your choice.** Daygo asks during setup, and you can change it any time in Settings → Privacy → Sync health data. It is **off unless you turn it on**.
   - **Off:** Apple Health data stays on your device. Only the specific values needed for an AI reply you ask for are sent to Anthropic's Claude API (see section 3).
-  - **On:** your Apple Health data (sleep, heart rate variability, resting heart rate, workouts, activity), your logs (and your lab values, only if you also share blood tests with a clinic) are backed up to our Supabase database (EU), linked to your account. This lets your coach, morning brief, weekly summary and pattern detection use your history, and lets a clinic you have joined see what you chose to share with it.
+  - **On:** your Apple Health data (sleep, heart rate variability, resting heart rate, workouts, activity), your logs (and your lab values, only if you also share blood tests with a clinic) are backed up to our Supabase database (EU), linked to your account. This lets your coach, morning brief, weekly summary and pattern detection use your history, and lets a clinic you have joined see what you chose to share with it. Your reminders are backed up too (title, time, repeat days), so they come back after a reinstall and stay the same on all your devices. When you delete a log, lab value or reminder, it is deleted from our servers as well; we keep only a note that an item with that ID was deleted (no content), so an old copy on another device can't bring it back.
   - Turning it off stops new uploads. To also remove what was already uploaded, delete your account or email privacy@daygo.ai.
 - We never use HealthKit data for advertising, and we never sell or share it with data brokers.
 
